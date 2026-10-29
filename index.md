@@ -1,11 +1,7 @@
-HopeLine Development Blog
-Welcome to my development blog for the HopeLine capstone project.
+### 📌 Entry #1
 
-Blog Entries
-📌 Entry #1
-Starting the Journey: Why HopeLine Matters
-https://bschreckhise1987.github.io/HopeLine/blog/first-post
+[Starting the Journey: Why HopeLine Matters](https://bschreckhise1987.github.io/HopeLine/blog/first-post)
 
-October 27, 2026
+*October 27, 2026*
 
 An introduction to my recovery journey, software development goals, and the inspiration behind the HopeLine application.
