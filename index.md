@@ -1,9 +1,9 @@
 HopeLine Development Blog
 Welcome to my development blog for the HopeLine capstone project.
 
-Entries
-<img width="4032" height="1176" alt="image" src="https://github.com/user-attachments/assets/37559245-02ff-4a49-8efd-38fdcbdc5646" />
-
+Blog Entries
+📌 Entry #1
+Starting the Journey: Why HopeLine Matters
 
 October 27, 2026
 
