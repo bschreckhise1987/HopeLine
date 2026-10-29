@@ -4,6 +4,7 @@ Welcome to my development blog for the HopeLine capstone project.
 Blog Entries
 📌 Entry #1
 Starting the Journey: Why HopeLine Matters
+https://bschreckhise1987.github.io/HopeLine/blog/first-post
 
 October 27, 2026
 
