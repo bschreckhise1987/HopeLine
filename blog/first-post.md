@@ -1,7 +1,6 @@
 ## Navigation
 
 - [Home](../)
-- [Entry #1 - Starting the Journey](./first-post)
 
 # Starting the Journey: Why HopeLine Matters
 
