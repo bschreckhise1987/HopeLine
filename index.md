@@ -1,3 +1,8 @@
+## Navigation
+
+- [Home](../)
+- [Entry #1 - Starting the Journey](./first-post)
+
 # HopeLine Development Blog
 
 *"Support When It Matters Most"*
