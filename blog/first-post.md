@@ -1,36 +1,41 @@
-Starting the Journey: Why HopeLine Matters
+# Starting the Journey: Why HopeLine Matters
+
 Author: Brandy Schreckhise
 
 Date: October 27, 2026
 
-Welcome
-Hello and welcome to my development blog for HopeLine.
+## About Me
 
-My name is Brandy Schreckhise, and I am currently completing my Software Development degree at Full Sail University. This blog will document the progress, challenges, solutions, and lessons learned throughout the development of my capstone project, HopeLine.
+Hello. My name is Brandy Schreckhise, and I am currently pursuing a Software Development degree at Full Sail University.
 
-My Journey
-My journey into software development has been shaped by both my personal experiences and my desire to help others. Throughout my recovery journey and growth in faith, I have learned the importance of having support available during difficult moments.
+My primary interests are mobile application development, user-focused software design, and building technology that can positively impact people's lives. Through my education, I have gained experience working with SwiftUI, Android development, APIs, databases, and modern software architecture practices.
 
-Recovery has taught me the value of taking life one day at a time. It has also shown me how important encouragement, accountability, and connection can be during moments of struggle. Those experiences inspired me to think about how technology could be used to provide support when people need it most.
+This blog will serve as a development journal throughout my capstone project and showcase my growth as a software developer.
 
-As I have continued developing my technical skills, I began looking for ways to combine those skills with my passion for helping others.
+## Why I Created HopeLine
 
-What is HopeLine?
-HopeLine is a mobile application designed to provide immediate support for individuals in recovery and those facing mental health challenges.
+HopeLine was inspired by my personal recovery journey and my faith.
 
-The goal is to provide practical tools such as grounding exercises, daily check-ins, personalized coping plans, scripture-based encouragement, sobriety tracking, and access to recovery resources. Future versions may also include community features, peer support, virtual meetings, and AI-assisted guidance.
+Throughout recovery, I learned that some of the hardest battles happen during moments when support is not immediately available. A phone call, an encouraging conversation, a scripture, or a reminder that someone cares can make all the difference.
 
-Rather than simply tracking progress, HopeLine is designed to help users navigate difficult moments before they become setbacks.
+As I developed my technical skills, I began looking for ways to combine software development with my desire to help others. HopeLine is the result of that vision.
 
-Goals for This Project
-Build a professional-quality mobile application
-Strengthen my iOS development skills
-Learn more about backend development with Supabase
-Create a meaningful tool that could help real people
-Gain experience working in a collaborative development environment
-Looking Ahead
-This blog will serve as a record of the development process, including technical challenges, design decisions, implementation strategies, and project milestones.
+## About HopeLine
 
-I am excited to begin this journey and look forward to sharing the progress of HopeLine throughout the capstone experience.
+HopeLine is a mobile application designed to provide immediate support for individuals facing addiction recovery challenges, emotional distress, anxiety, loneliness, and other difficult moments.
 
-Thank you for reading and following along.
+The application combines practical recovery tools such as daily check-ins, coping plans, sobriety tracking, emergency contacts, and meeting locators with faith-based encouragement and scripture resources.
+
+My goal is to create an application that helps people feel less alone and provides meaningful support when they need it most.
+
+## Goals For This Project
+
+- Strengthen my mobile development skills
+- Expand my experience with Supabase and backend development
+- Build a professional-quality capstone application
+- Create technology that can positively impact real people
+- Graduate with a project that reflects both my technical abilities and personal passion for helping others
+
+## Looking Ahead
+
+Future blog entries will document development milestones, technical challenges, design decisions, and lessons learned throughout the HopeLine development process.
