@@ -8,7 +8,6 @@ Welcome to the official development blog for **HopeLine**, a mobile application 
 
 ## Navigation
 
-- [Home](../)
 - [Entry #1 – Starting the Journey: Why HopeLine Matters](./blog/first-post)
 
 ---
