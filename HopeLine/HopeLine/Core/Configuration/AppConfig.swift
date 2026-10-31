@@ -6,7 +6,7 @@
 //
 import Foundation
 
-enum Environment {
+enum AppConfig {
 
     static var supabaseURL: URL {
         guard
