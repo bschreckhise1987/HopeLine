@@ -8,8 +8,8 @@ Welcome to the official development blog for **HopeLine**, a mobile application 
 
 ## Navigation
 
-- [Entry #1 October 27, 2026 – Starting the Journey: Why HopeLine Matters](./blog/first-post)
-
+- [October 27, 2026 - Starting the Journey: Why HopeLine Matters](./blog/2026-10-27.md)
+- [October 31, 2026 - Learning the Workflow: Git, GitHub, and HopeLine](./blog/2026-10-31.md)
 ---
 
 ## About the Project
