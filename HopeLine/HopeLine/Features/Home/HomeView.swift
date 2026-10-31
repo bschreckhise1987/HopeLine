@@ -33,8 +33,8 @@ struct HomeView: View {
                             .font(.title2)
                             .fontWeight(.semibold)
 
-                        Button {
-                            // Check-In navigation will go here later
+                        NavigationLink {
+                            CheckInView()
                         } label: {
                             Label(
                                 "Daily Check-In",
