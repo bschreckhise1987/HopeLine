@@ -88,11 +88,16 @@ struct HomeView: View {
 
                         // MARK: Meetings
 
-                        HomeFeatureCard(
-                            title: "Meetings",
-                            subtitle: "Find support",
-                            icon: "person.3.fill"
-                        )
+                        NavigationLink {
+                            MeetingsView()
+                        } label: {
+                            HomeFeatureCard(
+                                title: "Meetings",
+                                subtitle: "Find support",
+                                icon: "person.3.fill"
+                            )
+                        }
+                        .buttonStyle(.plain)
 
                         // MARK: Progress
 
