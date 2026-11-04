@@ -60,23 +60,41 @@ struct HomeView: View {
                         spacing: 16
                     ) {
 
-                        HomeFeatureCard(
-                            title: "Journal",
-                            subtitle: "Write and reflect",
-                            icon: "book.closed.fill"
-                        )
+                        // MARK: Journal
 
-                        HomeFeatureCard(
-                            title: "Prayer",
-                            subtitle: "Prayer requests",
-                            icon: "hands.sparkles.fill"
-                        )
+                        NavigationLink {
+                            JournalView()
+                        } label: {
+                            HomeFeatureCard(
+                                title: "Journal",
+                                subtitle: "Write and reflect",
+                                icon: "book.closed.fill"
+                            )
+                        }
+                        .buttonStyle(.plain)
+
+                        // MARK: Prayer
+
+                        NavigationLink {
+                            PrayerView()
+                        } label: {
+                            HomeFeatureCard(
+                                title: "Prayer",
+                                subtitle: "Prayer requests",
+                                icon: "hands.sparkles.fill"
+                            )
+                        }
+                        .buttonStyle(.plain)
+
+                        // MARK: Meetings
 
                         HomeFeatureCard(
                             title: "Meetings",
                             subtitle: "Find support",
                             icon: "person.3.fill"
                         )
+
+                        // MARK: Progress
 
                         HomeFeatureCard(
                             title: "Progress",
@@ -106,7 +124,10 @@ struct HomeView: View {
                             .foregroundStyle(.secondary)
                     }
                     .padding()
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .frame(
+                        maxWidth: .infinity,
+                        alignment: .leading
+                    )
                     .background(
                         Color(.secondarySystemBackground)
                     )
@@ -157,39 +178,34 @@ private struct HomeFeatureCard: View {
     let icon: String
 
     var body: some View {
-        Button {
-            // Feature navigation will be added later
-        } label: {
-            VStack(
-                alignment: .leading,
-                spacing: 12
-            ) {
+        VStack(
+            alignment: .leading,
+            spacing: 12
+        ) {
 
-                Image(systemName: icon)
-                    .font(.title2)
-                    .foregroundStyle(.blue)
+            Image(systemName: icon)
+                .font(.title2)
+                .foregroundStyle(.blue)
 
-                Text(title)
-                    .font(.headline)
-                    .foregroundStyle(.primary)
+            Text(title)
+                .font(.headline)
+                .foregroundStyle(.primary)
 
-                Text(subtitle)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .frame(
-                maxWidth: .infinity,
-                minHeight: 110,
-                alignment: .leading
-            )
-            .padding()
-            .background(
-                Color(.secondarySystemBackground)
-            )
-            .clipShape(
-                RoundedRectangle(cornerRadius: 16)
-            )
+            Text(subtitle)
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
-        .buttonStyle(.plain)
+        .frame(
+            maxWidth: .infinity,
+            minHeight: 110,
+            alignment: .leading
+        )
+        .padding()
+        .background(
+            Color(.secondarySystemBackground)
+        )
+        .clipShape(
+            RoundedRectangle(cornerRadius: 16)
+        )
     }
 }
