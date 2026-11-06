@@ -18,6 +18,10 @@ struct ScriptureView: View {
     @State private var isLoading = true
     @State private var errorMessage: String?
 
+    // The theme sheet state. When a theme row is
+    // tapped, this holds the selected theme.
+    @State private var selectedTheme: ScriptureTheme?
+
     // Uses the shared service instance — ScriptureService
     // has a private initializer (singleton pattern).
     private let scriptureService = ScriptureService.shared
@@ -337,47 +341,18 @@ struct ScriptureView: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
 
-                    ScriptureCategoryRow(
-                        emoji: "😰",
-                        title: "Anxious or Afraid",
-                        subtitle:
-                            "Peace, refuge, and God's presence"
-                    )
+                    // One tappable row per theme. Tapping
+                    // opens the theme's Scripture pool.
+                    ForEach(
+                        ScriptureTheme.allCases
+                    ) { theme in
 
-                    ScriptureCategoryRow(
-                        emoji: "🛡️",
-                        title: "Tempted or Craving",
-                        subtitle:
-                            "Strength, endurance, and a way through"
-                    )
-
-                    ScriptureCategoryRow(
-                        emoji: "💔",
-                        title: "Ashamed or Guilty",
-                        subtitle:
-                            "Grace, forgiveness, and restoration"
-                    )
-
-                    ScriptureCategoryRow(
-                        emoji: "🫂",
-                        title: "Lonely or Isolated",
-                        subtitle:
-                            "God's nearness and connection"
-                    )
-
-                    ScriptureCategoryRow(
-                        emoji: "🌤️",
-                        title: "Discouraged",
-                        subtitle:
-                            "Hope, perseverance, and courage"
-                    )
-
-                    ScriptureCategoryRow(
-                        emoji: "🙏",
-                        title: "Grateful",
-                        subtitle:
-                            "Praise and thanksgiving"
-                    )
+                        ScriptureCategoryRow(
+                            theme: theme
+                        ) {
+                            selectedTheme = theme
+                        }
+                    }
                 }
 
                 // MARK: - HopeLine Message
@@ -424,6 +399,16 @@ struct ScriptureView: View {
             // Loads today's Scripture when
             // the screen first appears.
             await loadScripture()
+        }
+        .sheet(
+            item: $selectedTheme
+        ) { theme in
+
+            // Shows the Scripture pool for the
+            // theme the user tapped.
+            ThemeScripturesView(
+                theme: theme
+            )
         }
     }
 
@@ -492,23 +477,24 @@ private struct ScriptureTag: View {
 }
 
 // MARK: - Scripture Category Row
+// One tappable theme row in the exploration section.
 
 private struct ScriptureCategoryRow: View {
 
-    let emoji: String
-    let title: String
-    let subtitle: String
+    let theme: ScriptureTheme
+
+    // Called when the row is tapped.
+    let onTap: () -> Void
 
     var body: some View {
 
         Button {
-            // Category Scripture
-            // selection comes later.
+            onTap()
         } label: {
 
             HStack(spacing: 14) {
 
-                Text(emoji)
+                Text(theme.emoji)
                     .font(.title2)
 
                 VStack(
@@ -516,13 +502,13 @@ private struct ScriptureCategoryRow: View {
                     spacing: 4
                 ) {
 
-                    Text(title)
+                    Text(theme.title)
                         .font(.headline)
                         .foregroundStyle(
                             .primary
                         )
 
-                    Text(subtitle)
+                    Text(theme.subtitle)
                         .font(.caption)
                         .foregroundStyle(
                             .secondary
@@ -549,6 +535,317 @@ private struct ScriptureCategoryRow: View {
             .clipShape(
                 RoundedRectangle(
                     cornerRadius: 16
+                )
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Theme Scriptures View
+// The sheet shown when a theme is tapped. Lists every
+// Scripture in that theme's pool so the user can read
+// several and choose one to hold onto.
+
+private struct ThemeScripturesView: View {
+
+    let theme: ScriptureTheme
+
+    // The theme's Scriptures loaded from Supabase.
+    @State private var scriptures: [ThemeScripture] = []
+    @State private var isLoading = true
+    @State private var errorMessage: String?
+
+    // The verse the user tapped to hold onto.
+    @State private var selectedScripture: ThemeScripture?
+
+    // Uses the shared service instance — ScriptureService
+    // has a private initializer (singleton pattern).
+    private let scriptureService = ScriptureService.shared
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+
+        NavigationStack {
+
+            ScrollView {
+
+                VStack(
+                    alignment: .leading,
+                    spacing: 16
+                ) {
+
+                    // MARK: Theme Header
+
+                    VStack(
+                        alignment: .leading,
+                        spacing: 6
+                    ) {
+
+                        Text(
+                            "\(theme.emoji) \(theme.title)"
+                        )
+                        .font(.title2)
+                        .fontWeight(.semibold)
+
+                        Text(
+                            theme.subtitle
+                        )
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    }
+                    .frame(
+                        maxWidth: .infinity,
+                        alignment: .leading
+                    )
+
+                    // MARK: Scripture List
+
+                    if isLoading {
+
+                        // Shown while the theme's pool loads.
+                        HStack(spacing: 12) {
+
+                            ProgressView()
+
+                            Text(
+                                "Finding Scriptures..."
+                            )
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        }
+                        .frame(
+                            maxWidth: .infinity,
+                            minHeight: 100,
+                            alignment: .center
+                        )
+                    }
+
+                    else if let errorMessage {
+
+                        // Shown when the pool can't load.
+                        VStack(
+                            alignment: .leading,
+                            spacing: 12
+                        ) {
+
+                            Label(
+                                "Couldn't Load Scriptures",
+                                systemImage:
+                                    "exclamationmark.triangle.fill"
+                            )
+                            .font(.headline)
+                            .foregroundStyle(.orange)
+
+                            Text(errorMessage)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+
+                            Button(
+                                "Try Again"
+                            ) {
+                                Task {
+                                    await loadScriptures()
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                        }
+                        .padding()
+                        .frame(
+                            maxWidth: .infinity,
+                            alignment: .leading
+                        )
+                        .background(
+                            Color(
+                                .secondarySystemBackground
+                            )
+                        )
+                        .clipShape(
+                            RoundedRectangle(
+                                cornerRadius: 16
+                            )
+                        )
+                    }
+
+                    else if scriptures.isEmpty {
+
+                        // Shown when the theme has no
+                        // Scriptures yet.
+                        Text(
+                            "No Scriptures are in this theme yet. Check back soon."
+                        )
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    }
+
+                    else {
+
+                        // One card per Scripture in the
+                        // theme pool.
+                        ForEach(scriptures) { scripture in
+
+                            ThemeScriptureCard(
+                                scripture: scripture,
+                                isSelected:
+                                    selectedScripture?
+                                        .id == scripture.id
+                            ) {
+                                // Tapping a Scripture selects it as
+                                // the one the user is holding onto.
+                                selectedScripture = scripture
+                            }
+                        }
+                    }
+                }
+                .padding()
+            }
+            .navigationTitle("Scriptures")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+
+                ToolbarItem(
+                    placement: .topBarTrailing
+                ) {
+
+                    Button(
+                        "Done"
+                    ) {
+                        dismiss()
+                    }
+                }
+            }
+            .task {
+                // Loads the theme's Scripture pool
+                // when the sheet first appears.
+                await loadScriptures()
+            }
+        }
+    }
+
+    // MARK: - Load Theme Scriptures
+    // Fetches this theme's Scripture pool from
+    // the database.
+
+    private func loadScriptures() async {
+
+        isLoading = true
+        errorMessage = nil
+
+        do {
+
+            scriptures =
+                try await scriptureService
+                    .fetchScriptures(
+                        for: theme
+                    )
+        }
+
+        catch {
+
+            errorMessage =
+                "HopeLine couldn't load these Scriptures. Check your internet connection and try again."
+        }
+
+        isLoading = false
+    }
+}
+
+// MARK: - Theme Scripture Card
+// One Scripture card inside the theme sheet.
+
+private struct ThemeScriptureCard: View {
+
+    let scripture: ThemeScripture
+
+    // Whether this is the verse the user tapped.
+    let isSelected: Bool
+
+    // Called when the card is tapped.
+    let onTap: () -> Void
+
+    var body: some View {
+
+        Button {
+            onTap()
+        } label: {
+
+            VStack(
+                alignment: .leading,
+                spacing: 12
+            ) {
+
+                // MARK: Reference and Selection
+
+                HStack {
+
+                    Text(
+                        scripture.verseReference
+                    )
+                    .font(.headline)
+                    .foregroundStyle(.blue)
+
+                    Spacer()
+
+                    // Filled bookmark shown on the
+                    // selected Scripture.
+                    if isSelected {
+
+                        Image(
+                            systemName:
+                                "bookmark.fill"
+                        )
+                        .foregroundStyle(.blue)
+                    }
+                }
+
+                // MARK: Verse Text
+
+                Text(
+                    scripture.verseText
+                )
+                .font(.body)
+                .multilineTextAlignment(.leading)
+                .lineSpacing(4)
+                .foregroundStyle(.primary)
+
+                // MARK: Selection Caption
+
+                if isSelected {
+
+                    Text(
+                        "You're holding onto this one today."
+                    )
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.blue)
+                }
+            }
+            .padding()
+            .frame(
+                maxWidth: .infinity,
+                alignment: .leading
+            )
+            .background(
+                isSelected
+                    ? Color.blue.opacity(0.08)
+                    : Color(.secondarySystemBackground)
+            )
+            .clipShape(
+                RoundedRectangle(
+                    cornerRadius: 16
+                )
+            )
+            .overlay(
+                // A subtle border on the selected card.
+                RoundedRectangle(
+                    cornerRadius: 16
+                )
+                .stroke(
+                    isSelected
+                        ? Color.blue.opacity(0.4)
+                        : .clear,
+                    lineWidth: 2
                 )
             )
         }

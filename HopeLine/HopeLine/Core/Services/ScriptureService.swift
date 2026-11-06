@@ -78,6 +78,34 @@ final class ScriptureService {
         return scriptures
     }
 
+    // MARK: - Fetch Scriptures by Theme
+    // Gets the Scripture pool for one recovery theme
+    // (anxious, tempted, etc.) from the scripture_references
+    // table. The verses come back in the database's
+    // sort_order.
+
+    func fetchScriptures(
+        for theme: ScriptureTheme
+    ) async throws -> [ThemeScripture] {
+
+        let scriptures: [ThemeScripture] =
+            try await supabase
+            .from("scripture_references")
+            .select()
+            .eq(
+                "theme",
+                value: theme.rawValue
+            )
+            .order(
+                "sort_order",
+                ascending: true
+            )
+            .execute()
+            .value
+
+        return scriptures
+    }
+
     // MARK: - Record Scripture View
     // Saves a row to `scripture_activity` when the user
     // opens a Scripture, so HopeLine can eventually show
