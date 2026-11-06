@@ -18,7 +18,9 @@ struct ScriptureView: View {
     @State private var isLoading = true
     @State private var errorMessage: String?
 
-    private let scriptureService = ScriptureService()
+    // Uses the shared service instance — ScriptureService
+    // has a private initializer (singleton pattern).
+    private let scriptureService = ScriptureService.shared
 
     var body: some View {
 
