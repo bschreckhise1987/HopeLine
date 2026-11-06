@@ -11,7 +11,8 @@ Welcome to the official development blog for **HopeLine**, a mobile application 
 - [October 27, 2026 - Starting the Journey: Why HopeLine Matters](./blog/2026-10-27.md)
 - [October 31, 2026 - Learning the Workflow: Git, GitHub, and HopeLine](./blog/2026-10-31.md)
 - [November 3, 2026 - Building Reflection and Community into HopeLine](./blog/2026-11-03.md)
-- [November 4, 2026 - Building a Location-Aware Recovery Meeting Finder](./2026-11-04.md)
+- [November 4, 2026 - Building a Location-Aware Recovery Meeting Finder](./blog/2026-11-04.md)
+- [November 5, 2026 - From Sample Data to 23,745 Real Meetings](./blog/2026-11-05.md)
 ---
 
 ## About the Project
