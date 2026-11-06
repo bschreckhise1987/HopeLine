@@ -2,7 +2,9 @@
 //  NearbyMeetingService.swift
 //  HopeLine
 //
-//  Created for the nationwide meeting finder feature.
+//  Fetches real meetings near the user's current location
+//  from the Supabase `meetings` table via the
+//  `nearby_meetings` database function.
 //
 
 import Foundation
@@ -10,6 +12,8 @@ import CoreLocation
 import Supabase
 
 // MARK: - Nearby Meeting Model
+// One recovery meeting returned by the database,
+// including how far away it is from the user.
 
 struct NearbyMeeting: Codable, Identifiable, Hashable {
 
@@ -30,8 +34,32 @@ struct NearbyMeeting: Codable, Identifiable, Hashable {
     let onlineURL: String?
     let distanceMiles: Double?
 
+    // Maps the database's snake_case column names
+    // (meeting_guide_id, is_online, ...) to Swift's
+    // camelCase property names above.
+    enum CodingKeys: String, CodingKey {
+
+        case id
+        case meetingGuideID = "meeting_guide_id"
+        case name
+        case meetingType = "meeting_type"
+        case meetingDay = "meeting_day"
+        case meetingTime = "meeting_time"
+        case endTime = "end_time"
+        case address
+        case city
+        case state
+        case postalCode = "postal_code"
+        case latitude
+        case longitude
+        case isOnline = "is_online"
+        case onlineURL = "online_url"
+        case distanceMiles = "distance_miles"
+    }
+
     // MARK: - Display Helpers
 
+    // Turns "19:30" into "7:30 PM" for the meeting card.
     var formattedTime: String? {
 
         guard let meetingTime,
@@ -58,6 +86,7 @@ struct NearbyMeeting: Codable, Identifiable, Hashable {
             "\(displayHour):\(String(format: "%02d", minute)) \(isPM ? "PM" : "AM")"
     }
 
+    // Turns 0.18511... into "0.2 mi away" for the meeting card.
     var formattedDistance: String? {
 
         guard let distanceMiles
@@ -69,6 +98,8 @@ struct NearbyMeeting: Codable, Identifiable, Hashable {
             String(format: "%.1f mi away", distanceMiles)
     }
 
+    // The map coordinate for this meeting, if the
+    // database has one on file.
     var coordinate: CLLocationCoordinate2D? {
 
         guard
@@ -86,6 +117,8 @@ struct NearbyMeeting: Codable, Identifiable, Hashable {
 }
 
 // MARK: - RPC Parameters
+// The values sent to the database function:
+// the user's location and how far out to search.
 
 private struct NearbyMeetingsParams: Encodable {
 
@@ -93,6 +126,8 @@ private struct NearbyMeetingsParams: Encodable {
     let lng: Double
     let radiusMiles: Double
 
+    // Uses snake_case keys so the database function
+    // receives the argument names it expects.
     enum CodingKeys: String, CodingKey {
 
         case lat
@@ -102,6 +137,7 @@ private struct NearbyMeetingsParams: Encodable {
 }
 
 // MARK: - Nearby Meeting Service
+// Calls Supabase to get meetings near a location.
 
 final class NearbyMeetingService {
 
@@ -110,6 +146,9 @@ final class NearbyMeetingService {
     private init() {}
 
     // MARK: - Fetch Nearby Meetings
+    // Gets all meetings within the given radius of the
+    // user's coordinates, already sorted by distance
+    // (closest first) by the database.
 
     func fetchNearbyMeetings(
         latitude: Double,
@@ -136,9 +175,9 @@ final class NearbyMeetingService {
     }
 
     // MARK: - Fetch With Automatic Widening
-
-    // Tries the requested radius first, then widens it
-    // until meetings are found or the largest radius is reached.
+    // Tries the starting radius first. If nothing is
+    // found (rural areas), widens the search step by
+    // step up to 100 miles before giving up.
 
     func fetchNearbyMeetingsWithWidening(
         latitude: Double,
