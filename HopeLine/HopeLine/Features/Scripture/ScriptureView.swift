@@ -12,8 +12,6 @@ struct ScriptureView: View {
 
     // MARK: - State
 
-    @State private var isSaved = false
-
     // Today's Scripture loaded from Supabase.
     @State private var scripture: DailyScripture?
     @State private var isLoading = true
@@ -713,6 +711,10 @@ private struct ThemeScripturesView: View {
     // Shown when the theme reflection sheet is open.
     @State private var showThemeReflection = false
 
+    // Confirms a theme reflection was saved
+    // to the Journal.
+    @State private var showReflectionSaved = false
+
     // Uses the shared service instance — ScriptureService
     // has a private initializer (singleton pattern).
     private let scriptureService = ScriptureService.shared
@@ -918,6 +920,16 @@ private struct ThemeScripturesView: View {
                         [.large]
                     )
                 }
+            }
+            .alert(
+                "Saved to Your Journal",
+                isPresented: $showReflectionSaved
+            ) {
+                Button("OK") { }
+            } message: {
+                Text(
+                    "Your reflection was saved to your Journal."
+                )
             }
             .task {
                 // Loads the theme's Scripture pool
