@@ -7,6 +7,7 @@
 
 import SwiftUI
 import MapKit
+import CoreLocation
 
 struct MeetingsView: View {
 
@@ -16,32 +17,13 @@ struct MeetingsView: View {
 
     @State private var mapPosition: MapCameraPosition = .userLocation(followsHeading: false, fallback: .automatic)
 
-    private let sampleMeetings: [MeetingPreview] = [
-        MeetingPreview(
-            name: "New Beginnings",
-            day: "Monday",
-            time: "7:00 PM",
-            location: "Community Center",
-            type: .inPerson
-        ),
+    // MARK: - Live Meeting State
 
-        MeetingPreview(
-            name: "One Day at a Time",
-            day: "Wednesday",
-            time: "6:30 PM",
-            location: "Online Meeting",
-            type: .online
-        ),
+    @State private var nearbyMeetings: [NearbyMeeting] = []
+    @State private var isLoadingMeetings = false
+    @State private var meetingsErrorMessage: String?
 
-        MeetingPreview(
-            name: "Hope in Recovery",
-            day: "Friday",
-            time: "8:00 PM",
-            location: "Recovery Center",
-            type: .inPerson
-        )
-    ]
-
+    @Environment(\.openURL) private var openURL
 
     var body: some View {
         ScrollView {
@@ -62,7 +44,6 @@ struct MeetingsView: View {
                     .foregroundStyle(.secondary)
                 }
 
-
                 // MARK: - Search
 
                 HStack(spacing: 12) {
@@ -80,6 +61,7 @@ struct MeetingsView: View {
                         Button {
                             searchText = ""
                         } label: {
+
                             Image(
                                 systemName: "xmark.circle.fill"
                             )
@@ -96,7 +78,6 @@ struct MeetingsView: View {
                     RoundedRectangle(cornerRadius: 16)
                 )
 
-
                 // MARK: - Filters
 
                 Picker(
@@ -110,7 +91,6 @@ struct MeetingsView: View {
                     }
                 }
                 .pickerStyle(.segmented)
-
 
                 // MARK: - Encouragement
 
@@ -140,7 +120,6 @@ struct MeetingsView: View {
                     RoundedRectangle(cornerRadius: 16)
                 )
 
-
                 // MARK: - Map
 
                 VStack(alignment: .leading, spacing: 12) {
@@ -158,7 +137,23 @@ struct MeetingsView: View {
                     }
 
                     Map(position: $mapPosition) {
+
                         UserAnnotation()
+
+                        ForEach(displayedMeetings) { meeting in
+
+                            if let coordinate = meeting.coordinate {
+
+                                Marker(
+                                    meeting.name,
+                                    systemImage:
+                                        meeting.isOnline
+                                        ? "video.fill"
+                                        : "person.3.fill",
+                                    coordinate: coordinate
+                                )
+                            }
+                        }
                     }
                     .frame(height: 230)
                     .clipShape(
@@ -166,35 +161,130 @@ struct MeetingsView: View {
                     )
 
                     Text(
-                        "Meeting locations will appear on the map when live meeting data is connected."
+                        "Meetings within your search area, closest first."
                     )
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 }
-
 
                 // MARK: - Meeting List
 
                 VStack(alignment: .leading, spacing: 16) {
 
-                    Text("Upcoming Meetings")
+                    Text("Meetings Near You")
                         .font(.title2)
                         .fontWeight(.semibold)
 
-                    Text(
-                        "Sample meetings are shown while the meeting service is being developed."
-                    )
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    if isLoadingMeetings {
 
-                    ForEach(filteredMeetings) { meeting in
+                        HStack(spacing: 12) {
 
-                        MeetingCard(
-                            meeting: meeting
+                            ProgressView()
+
+                            Text(
+                                "Finding meetings near you..."
+                            )
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        }
+                        .padding()
+                    }
+
+                    else if let meetingsErrorMessage {
+
+                        VStack(alignment: .leading, spacing: 12) {
+
+                            Label(
+                                "Couldn't Load Meetings",
+                                systemImage:
+                                    "exclamationmark.triangle.fill"
+                            )
+                            .font(.headline)
+                            .foregroundStyle(.orange)
+
+                            Text(meetingsErrorMessage)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+
+                            Button(
+                                "Try Again"
+                            ) {
+                                locationService.requestLocation()
+                            }
+                            .buttonStyle(.bordered)
+                        }
+                        .padding()
+                        .frame(
+                            maxWidth: .infinity,
+                            alignment: .leading
+                        )
+                        .background(
+                            Color(.secondarySystemBackground)
+                        )
+                        .clipShape(
+                            RoundedRectangle(cornerRadius: 16)
                         )
                     }
-                }
 
+                    else if nearbyMeetings.isEmpty {
+
+                        VStack(alignment: .leading, spacing: 12) {
+
+                            Label(
+                                "Waiting for Your Location",
+                                systemImage:
+                                    "location.circle.fill"
+                            )
+                            .font(.headline)
+
+                            Text(
+                                locationService.errorMessage
+                                    ?? "HopeLine uses your location to find recovery meetings near you — wherever you are."
+                            )
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+
+                            Button(
+                                "Find Meetings Near Me"
+                            ) {
+                                locationService.requestLocation()
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
+                        .padding()
+                        .frame(
+                            maxWidth: .infinity,
+                            alignment: .leading
+                        )
+                        .background(
+                            Color(.secondarySystemBackground)
+                        )
+                        .clipShape(
+                            RoundedRectangle(cornerRadius: 16)
+                        )
+                    }
+
+                    else {
+
+                        Text(
+                            "\(filteredMeetings.count) meetings found"
+                        )
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                        ForEach(filteredMeetings) { meeting in
+
+                            MeetingCard(
+                                meeting: meeting
+                            ) { selected in
+
+                                openDirections(
+                                    to: selected
+                                )
+                            }
+                        }
+                    }
+                }
 
                 // MARK: - Can't Find a Meeting
 
@@ -208,7 +298,7 @@ struct MeetingsView: View {
                     .font(.headline)
 
                     Text(
-                        "More meeting sources and recovery resources will be added as HopeLine's meeting tools are developed."
+                        "HopeLine lists Narcotics Anonymous meetings across the United States. More meeting sources and recovery resources will be added as HopeLine grows."
                     )
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -247,15 +337,72 @@ struct MeetingsView: View {
                     )
                 )
             )
+
+            Task {
+                await loadMeetings(near: location)
+            }
         }
     }
 
+    // MARK: - Load Meetings
+
+    private func loadMeetings(near location: CLLocation) async {
+
+        isLoadingMeetings = true
+        meetingsErrorMessage = nil
+
+        do {
+
+            nearbyMeetings =
+                try await NearbyMeetingService.shared
+                .fetchNearbyMeetingsWithWidening(
+                    latitude: location.coordinate.latitude,
+                    longitude: location.coordinate.longitude
+                )
+        }
+
+        catch {
+
+            meetingsErrorMessage =
+                "HopeLine couldn't load meetings right now. Check your internet connection and try again."
+        }
+
+        isLoadingMeetings = false
+    }
+
+    // MARK: - Directions
+
+    private func openDirections(to meeting: NearbyMeeting) {
+
+        guard let coordinate = meeting.coordinate
+        else {
+            return
+        }
+
+        let urlString =
+            "https://maps.apple.com/?daddr=\(coordinate.latitude),\(coordinate.longitude)&q=\(meeting.name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
+
+        guard let url = URL(string: urlString)
+        else {
+            return
+        }
+
+        openURL(url)
+    }
+
+    // MARK: - Displayed Meetings
+
+    // Everything within the map area — used for map pins
+
+    private var displayedMeetings: [NearbyMeeting] {
+        nearbyMeetings
+    }
 
     // MARK: - Filtered Meetings
 
-    private var filteredMeetings: [MeetingPreview] {
+    private var filteredMeetings: [NearbyMeeting] {
 
-        sampleMeetings.filter { meeting in
+        nearbyMeetings.filter { meeting in
 
             let matchesType: Bool
 
@@ -266,13 +413,12 @@ struct MeetingsView: View {
 
             case .inPerson:
                 matchesType =
-                    meeting.type == .inPerson
+                    meeting.isOnline == false
 
             case .online:
                 matchesType =
-                    meeting.type == .online
+                    meeting.isOnline
             }
-
 
             let trimmedSearch =
                 searchText.trimmingCharacters(
@@ -284,21 +430,28 @@ struct MeetingsView: View {
                 meeting.name.localizedCaseInsensitiveContains(
                     trimmedSearch
                 ) ||
-                meeting.location.localizedCaseInsensitiveContains(
-                    trimmedSearch
-                )
+                (meeting.city ?? "")
+                    .localizedCaseInsensitiveContains(trimmedSearch) ||
+                (meeting.address ?? "")
+                    .localizedCaseInsensitiveContains(trimmedSearch)
 
             return matchesType && matchesSearch
         }
     }
 }
 
-
 // MARK: - Meeting Card
 
 private struct MeetingCard: View {
 
-    let meeting: MeetingPreview
+    let meeting: NearbyMeeting
+
+    let onDirections: (NearbyMeeting) -> Void
+
+    private var meetingType: MeetingType {
+
+        meeting.isOnline ? .online : .inPerson
+    }
 
     var body: some View {
 
@@ -320,72 +473,76 @@ private struct MeetingCard: View {
                         .font(.headline)
 
                     MeetingTypeBadge(
-                        type: meeting.type
+                        type: meetingType
                     )
                 }
 
                 Spacer()
 
-                Image(
-                    systemName:
-                        meeting.type.icon
-                )
-                .font(.title2)
-                .foregroundStyle(
-                    meeting.type.color
-                )
+                if let distance =
+                    meeting.formattedDistance {
+
+                    Text(distance)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.blue)
+                }
             }
 
-
             Divider()
-
 
             // MARK: Date and Time
 
             Label(
-                "\(meeting.day) at \(meeting.time)",
+                "\(meeting.meetingDay ?? "Call for details") at \(meeting.formattedTime ?? "Call for details")",
                 systemImage: "calendar"
             )
             .font(.subheadline)
 
-
             // MARK: Location
 
             Label(
-                meeting.location,
+                meeting.isOnline
+                    ? "Online Meeting"
+                    : meeting.locationDescription,
                 systemImage:
-                    meeting.type == .online
+                    meeting.isOnline
                     ? "video.fill"
                     : "mappin.and.ellipse"
             )
             .font(.subheadline)
             .foregroundStyle(.secondary)
 
-
             // MARK: Actions
 
             HStack {
 
-                Button {
-                    // Meeting details come later.
-                } label: {
+                if meeting.isOnline {
 
-                    Label(
-                        "Details",
-                        systemImage:
-                            "info.circle"
-                    )
+                    if
+                        let urlString =
+                            meeting.onlineURL,
+                        let url = URL(string: urlString) {
+
+                        Link(
+                            destination: url
+                        ) {
+
+                            Label(
+                                "Join",
+                                systemImage: "video.fill"
+                            )
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
                 }
-                .buttonStyle(.bordered)
 
-
-                Spacer()
-
-
-                if meeting.type == .inPerson {
+                else {
 
                     Button {
-                        // Map directions come later.
+
+                        onDirections(meeting)
+
                     } label: {
 
                         Label(
@@ -394,25 +551,7 @@ private struct MeetingCard: View {
                                 "arrow.triangle.turn.up.right.diamond.fill"
                         )
                     }
-                    .buttonStyle(
-                        .borderedProminent
-                    )
-
-                } else {
-
-                    Button {
-                        // Online meeting joining comes later.
-                    } label: {
-
-                        Label(
-                            "Join",
-                            systemImage:
-                                "video.fill"
-                        )
-                    }
-                    .buttonStyle(
-                        .borderedProminent
-                    )
+                    .buttonStyle(.borderedProminent)
                 }
             }
         }
@@ -425,7 +564,6 @@ private struct MeetingCard: View {
         )
     }
 }
-
 
 // MARK: - Meeting Type Badge
 
@@ -453,21 +591,6 @@ private struct MeetingTypeBadge: View {
     }
 }
 
-
-// MARK: - Meeting Preview
-
-private struct MeetingPreview: Identifiable {
-
-    let id = UUID()
-
-    let name: String
-    let day: String
-    let time: String
-    let location: String
-    let type: MeetingType
-}
-
-
 // MARK: - Meeting Type
 
 private enum MeetingType {
@@ -487,7 +610,6 @@ private enum MeetingType {
         }
     }
 
-
     var icon: String {
 
         switch self {
@@ -499,7 +621,6 @@ private enum MeetingType {
             return "video.fill"
         }
     }
-
 
     var color: Color {
 
@@ -513,7 +634,6 @@ private enum MeetingType {
         }
     }
 }
-
 
 // MARK: - Meeting Filter
 
@@ -529,7 +649,6 @@ private enum MeetingFilter:
     var id: String {
         rawValue
     }
-
 
     var title: String {
 
@@ -547,6 +666,27 @@ private enum MeetingFilter:
     }
 }
 
+// MARK: - Nearby Meeting Display Helpers
+
+private extension NearbyMeeting {
+
+    var locationDescription: String {
+
+        let parts =
+            [
+                address,
+                city,
+                state
+            ]
+            .compactMap { $0 }
+            .filter { !$0.isEmpty }
+
+        return
+            parts.isEmpty
+            ? "Call for details"
+            : parts.joined(separator: ", ")
+    }
+}
 
 // MARK: - Preview
 
