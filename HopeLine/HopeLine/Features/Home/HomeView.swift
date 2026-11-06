@@ -9,6 +9,13 @@ import SwiftUI
 
 struct HomeView: View {
 
+    // MARK: - State
+
+    // Today's Scripture shown in the Home card.
+    @State private var dailyScripture: DailyScripture?
+
+    private let scriptureService = ScriptureService()
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -110,35 +117,59 @@ struct HomeView: View {
 
                     // MARK: - Daily Scripture
 
-                    VStack(alignment: .leading, spacing: 12) {
-                        Label(
-                            "Daily Scripture",
-                            systemImage: "cross.fill"
-                        )
-                        .font(.headline)
+                    // Live card showing today's Scripture.
+                    // Tapping opens the full Scripture screen.
 
-                        Text(
-                            "Scripture of the day will appear here."
-                        )
-                        .font(.body)
-                        .foregroundStyle(.secondary)
+                    NavigationLink {
+                        ScriptureView()
+                    } label: {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Label(
+                                "Daily Scripture",
+                                systemImage: "cross.fill"
+                            )
+                            .font(.headline)
 
-                        Text("Reference")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(.secondary)
+                            if let scripture = dailyScripture {
+
+                                // A short preview of today's verse.
+                                Text(
+                                    scripture.verseText
+                                )
+                                .font(.body)
+                                .lineLimit(3)
+                                .foregroundStyle(.secondary)
+
+                                Text(
+                                    scripture.verseReference
+                                )
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.blue)
+                            } else {
+
+                                // Shown while today's
+                                // Scripture loads.
+                                Text(
+                                    "Tap to read today's Scripture."
+                                )
+                                .font(.body)
+                                .foregroundStyle(.secondary)
+                            }
+                        }
+                        .padding()
+                        .frame(
+                            maxWidth: .infinity,
+                            alignment: .leading
+                        )
+                        .background(
+                            Color(.secondarySystemBackground)
+                        )
+                        .clipShape(
+                            RoundedRectangle(cornerRadius: 16)
+                        )
                     }
-                    .padding()
-                    .frame(
-                        maxWidth: .infinity,
-                        alignment: .leading
-                    )
-                    .background(
-                        Color(.secondarySystemBackground)
-                    )
-                    .clipShape(
-                        RoundedRectangle(cornerRadius: 16)
-                    )
+                    .buttonStyle(.plain)
 
                     // MARK: - Help
 
@@ -157,6 +188,11 @@ struct HomeView: View {
                 .padding()
             }
             .navigationTitle("HopeLine")
+            .task {
+                // Loads today's Scripture when
+                // the Home screen first appears.
+                await loadDailyScripture()
+            }
             .toolbar {
 
                 ToolbarItem(
@@ -170,6 +206,18 @@ struct HomeView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Load Daily Scripture
+    // Fetches today's Scripture for the Home card.
+    // Failures are silent here — the card simply shows
+    // its fallback text instead of blocking the Home screen.
+
+    private func loadDailyScripture() async {
+
+        dailyScripture =
+            try? await scriptureService
+                .fetchDailyScripture()
     }
 }
 

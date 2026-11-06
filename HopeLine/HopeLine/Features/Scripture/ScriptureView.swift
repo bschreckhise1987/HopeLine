@@ -9,7 +9,16 @@ import SwiftUI
 
 struct ScriptureView: View {
 
+    // MARK: - State
+
     @State private var isSaved = false
+
+    // Today's Scripture loaded from Supabase.
+    @State private var scripture: DailyScripture?
+    @State private var isLoading = true
+    @State private var errorMessage: String?
+
+    private let scriptureService = ScriptureService()
 
     var body: some View {
 
@@ -38,7 +47,6 @@ struct ScriptureView: View {
                     .foregroundStyle(.secondary)
                 }
 
-
                 // MARK: - Today Card
 
                 VStack(
@@ -53,56 +61,134 @@ struct ScriptureView: View {
                     .font(.headline)
                     .foregroundStyle(.blue)
 
-                    Text(
-                        "A Scripture selected to encourage you in today's journey."
-                    )
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    if isLoading {
 
+                        // Shown while today's Scripture
+                        // is being fetched.
+                        HStack(spacing: 12) {
 
-                    Divider()
+                            ProgressView()
 
+                            Text(
+                                "Finding today's Scripture..."
+                            )
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        }
+                        .frame(
+                            maxWidth: .infinity,
+                            minHeight: 80,
+                            alignment: .leading
+                        )
+                    }
 
-                    // MARK: Scripture
+                    else if let errorMessage {
 
-                    Text(
-                        """
-                        God is our refuge and strength, a very present help in trouble.
-                        """
-                    )
-                    .font(.title3)
-                    .fontWeight(.medium)
-                    .multilineTextAlignment(.leading)
-                    .lineSpacing(6)
+                        // Shown when the Scripture
+                        // couldn't be loaded.
+                        VStack(
+                            alignment: .leading,
+                            spacing: 12
+                        ) {
 
+                            Label(
+                                "Couldn't Load Scripture",
+                                systemImage:
+                                    "exclamationmark.triangle.fill"
+                            )
+                            .font(.headline)
+                            .foregroundStyle(.orange)
 
-                    Text("Psalm 46:1")
+                            Text(errorMessage)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+
+                            Button(
+                                "Try Again"
+                            ) {
+                                Task {
+                                    await loadScripture()
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                        }
+                    }
+
+                    else if let scripture {
+
+                        // Today's verse, straight from
+                        // the daily_scriptures table.
+                        Text(
+                            "A Scripture selected to encourage you in today's journey."
+                        )
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+
+                        Divider()
+
+                        // MARK: Scripture
+
+                        Text(
+                            scripture.verseText
+                        )
+                        .font(.title3)
+                        .fontWeight(.medium)
+                        .multilineTextAlignment(.leading)
+                        .lineSpacing(6)
+
+                        Text(
+                            scripture.verseReference
+                        )
                         .font(.headline)
                         .foregroundStyle(.blue)
 
+                        // MARK: Prayer
 
-                    // MARK: Save
+                        // The short prayer saved with
+                        // this Scripture in the database.
+                        if let prayer = scripture.prayer {
 
-                    Button {
+                            Divider()
 
-                        isSaved.toggle()
+                            Label(
+                                "A Prayer for Today",
+                                systemImage:
+                                    "hands.sparkles.fill"
+                            )
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
 
-                    } label: {
+                            Text(
+                                prayer
+                            )
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .lineSpacing(4)
+                        }
 
-                        Label(
-                            isSaved
-                                ? "Saved"
-                                : "Save Scripture",
-                            systemImage:
+                        // MARK: Save
+
+                        Button {
+
+                            isSaved.toggle()
+
+                        } label: {
+
+                            Label(
                                 isSaved
-                                ? "bookmark.fill"
-                                : "bookmark"
-                        )
-                        .frame(
-                            maxWidth: .infinity
-                        )
+                                    ? "Saved"
+                                    : "Save Scripture",
+                                systemImage:
+                                    isSaved
+                                    ? "bookmark.fill"
+                                    : "bookmark"
+                            )
+                            .frame(
+                                maxWidth: .infinity
+                            )
+                        }
+                        .buttonStyle(.bordered)
                     }
-                    .buttonStyle(.bordered)
                 }
                 .padding()
                 .background(
@@ -115,7 +201,6 @@ struct ScriptureView: View {
                         cornerRadius: 16
                     )
                 )
-
 
                 // MARK: - Check-In Connection
 
@@ -136,7 +221,6 @@ struct ScriptureView: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
 
-
                     HStack(spacing: 8) {
 
                         ScriptureTag(
@@ -147,7 +231,6 @@ struct ScriptureView: View {
                             text: "Anxious"
                         )
                     }
-
 
                     Text(
                         "Personalized Scripture recommendations are coming as HopeLine continues to grow."
@@ -169,7 +252,6 @@ struct ScriptureView: View {
                     )
                 )
 
-
                 // MARK: - Reflection
 
                 VStack(
@@ -189,19 +271,19 @@ struct ScriptureView: View {
                         Spacer()
                     }
 
-
+                    // The reflection prompt saved with
+                    // this Scripture in the database.
                     Text(
-                        "What does this Scripture speak to in what you're walking through today?"
+                        scripture?.reflectionPrompt
+                            ?? "What does this Scripture speak to in what you're walking through today?"
                     )
                     .font(.body)
-
 
                     Text(
                         "Take a moment to slow down, reflect, and write whatever is on your heart."
                     )
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-
 
                     Button {
                         // Journal connection comes next.
@@ -234,7 +316,6 @@ struct ScriptureView: View {
                     )
                 )
 
-
                 // MARK: - When You Need Encouragement
 
                 VStack(
@@ -254,14 +335,12 @@ struct ScriptureView: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
 
-
                     ScriptureCategoryRow(
                         emoji: "😰",
                         title: "Anxious or Afraid",
                         subtitle:
                             "Peace, refuge, and God's presence"
                     )
-
 
                     ScriptureCategoryRow(
                         emoji: "🛡️",
@@ -270,14 +349,12 @@ struct ScriptureView: View {
                             "Strength, endurance, and a way through"
                     )
 
-
                     ScriptureCategoryRow(
                         emoji: "💔",
                         title: "Ashamed or Guilty",
                         subtitle:
                             "Grace, forgiveness, and restoration"
                     )
-
 
                     ScriptureCategoryRow(
                         emoji: "🫂",
@@ -286,14 +363,12 @@ struct ScriptureView: View {
                             "God's nearness and connection"
                     )
 
-
                     ScriptureCategoryRow(
                         emoji: "🌤️",
                         title: "Discouraged",
                         subtitle:
                             "Hope, perseverance, and courage"
                     )
-
 
                     ScriptureCategoryRow(
                         emoji: "🙏",
@@ -302,7 +377,6 @@ struct ScriptureView: View {
                             "Praise and thanksgiving"
                     )
                 }
-
 
                 // MARK: - HopeLine Message
 
@@ -344,9 +418,47 @@ struct ScriptureView: View {
         }
         .navigationTitle("Scripture")
         .navigationBarTitleDisplayMode(.inline)
+        .task {
+            // Loads today's Scripture when
+            // the screen first appears.
+            await loadScripture()
+        }
+    }
+
+    // MARK: - Load Scripture
+    // Fetches today's Scripture from the database and
+    // records that the user viewed it.
+
+    private func loadScripture() async {
+
+        isLoading = true
+        errorMessage = nil
+
+        do {
+
+            let todayScripture =
+                try await scriptureService
+                    .fetchDailyScripture()
+
+            scripture = todayScripture
+
+            // Logs the view for signed-in users;
+            // does nothing when not signed in.
+            await scriptureService
+                .recordView(
+                    scriptureId: todayScripture.id
+                )
+        }
+
+        catch {
+
+            errorMessage =
+                "HopeLine couldn't load today's Scripture. Check your internet connection and try again."
+        }
+
+        isLoading = false
     }
 }
-
 
 // MARK: - Scripture Tag
 
@@ -377,7 +489,6 @@ private struct ScriptureTag: View {
     }
 }
 
-
 // MARK: - Scripture Category Row
 
 private struct ScriptureCategoryRow: View {
@@ -398,7 +509,6 @@ private struct ScriptureCategoryRow: View {
                 Text(emoji)
                     .font(.title2)
 
-
                 VStack(
                     alignment: .leading,
                     spacing: 4
@@ -417,9 +527,7 @@ private struct ScriptureCategoryRow: View {
                         )
                 }
 
-
                 Spacer()
-
 
                 Image(
                     systemName:
@@ -445,7 +553,6 @@ private struct ScriptureCategoryRow: View {
         .buttonStyle(.plain)
     }
 }
-
 
 // MARK: - Preview
 
