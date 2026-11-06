@@ -2,6 +2,8 @@
 //  ScriptureService.swift
 //  HopeLine
 //
+//  Created by StalkyTwig1987 on 11/6/26.
+//
 //  Loads the daily Scripture from Supabase and records
 //  when a user views one. Built so a future AI
 //  recommendation layer can be added without changing

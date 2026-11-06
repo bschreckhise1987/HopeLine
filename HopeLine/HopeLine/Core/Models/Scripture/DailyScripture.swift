@@ -2,6 +2,8 @@
 //  DailyScripture.swift
 //  HopeLine
 //
+//  Created by StalkyTwig1987 on 11/6/26.
+//
 //  One curated daily Scripture from the `daily_scriptures`
 //  table — the verse, its reference, a short prayer, and a
 //  reflection prompt for the user's day.
