@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Supabase
 
 struct ScriptureView: View {
 
@@ -21,6 +22,20 @@ struct ScriptureView: View {
     // The theme sheet state. When a theme row is
     // tapped, this holds the selected theme.
     @State private var selectedTheme: ScriptureTheme?
+
+    // Whether the user already saved today's verse.
+    @State private var isSaved = false
+    @State private var isSavingScripture = false
+
+    // Shown when the Journal reflection sheet is open.
+    @State private var showReflection = false
+
+    // Confirms a reflection was saved to the Journal.
+    @State private var showReflectionSaved = false
+
+    // Shown when saving a Scripture fails.
+    @State private var saveError: String?
+    @State private var showSaveError = false
 
     // Uses the shared service instance — ScriptureService
     // has a private initializer (singleton pattern).
@@ -174,26 +189,43 @@ struct ScriptureView: View {
 
                         // MARK: Save
 
+                        // Saves or removes the verse from
+                        // the user's saved Scriptures.
                         Button {
 
-                            isSaved.toggle()
+                            Task {
+                                await toggleSave()
+                            }
 
                         } label: {
 
-                            Label(
-                                isSaved
-                                    ? "Saved"
-                                    : "Save Scripture",
-                                systemImage:
+                            HStack(spacing: 8) {
+
+                                if isSavingScripture {
+
+                                    // Small spinner shown while
+                                    // the save is in flight.
+                                    ProgressView()
+                                }
+
+                                Label(
                                     isSaved
-                                    ? "bookmark.fill"
-                                    : "bookmark"
-                            )
-                            .frame(
-                                maxWidth: .infinity
-                            )
+                                        ? "Saved — Tap to Remove"
+                                        : "Save Scripture",
+                                    systemImage:
+                                        isSaved
+                                        ? "bookmark.fill"
+                                        : "bookmark"
+                                )
+                                .frame(
+                                    maxWidth: .infinity
+                                )
+                            }
                         }
                         .buttonStyle(.bordered)
+                        .disabled(
+                            isSavingScripture
+                        )
                     }
                 }
                 .padding()
@@ -291,8 +323,10 @@ struct ScriptureView: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
 
+                    // Opens the reflection sheet with the
+                    // Scripture and prompt pre-filled.
                     Button {
-                        // Journal connection comes next.
+                        showReflection = true
                     } label: {
 
                         Label(
@@ -309,6 +343,11 @@ struct ScriptureView: View {
                         .borderedProminent
                     )
                     .controlSize(.large)
+                    // Reflection needs today's Scripture
+                    // to be loaded first.
+                    .disabled(
+                        scripture == nil
+                    )
                 }
                 .padding()
                 .background(
@@ -410,6 +449,52 @@ struct ScriptureView: View {
                 theme: theme
             )
         }
+        .sheet(
+            isPresented: $showReflection
+        ) {
+
+            // The Journal reflection sheet, pre-filled
+            // with today's Scripture and prompt.
+            if let scripture {
+
+                ScriptureReflectionView(
+                    verseReference:
+                        scripture.verseReference,
+                    verseText:
+                        scripture.verseText,
+                    reflectionPrompt:
+                        scripture.reflectionPrompt
+                ) {
+                    // Called when the reflection is
+                    // saved to the Journal.
+                    showReflectionSaved = true
+                }
+                .presentationDetents(
+                    [.large]
+                )
+            }
+        }
+        .alert(
+            "Saved to Your Journal",
+            isPresented: $showReflectionSaved
+        ) {
+            Button("OK") { }
+        } message: {
+            Text(
+                "Your reflection was saved to your Journal."
+            )
+        }
+        .alert(
+            "Couldn't Save Scripture",
+            isPresented: $showSaveError
+        ) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(
+                saveError
+                ?? "Something went wrong. Please try again."
+            )
+        }
     }
 
     // MARK: - Load Scripture
@@ -429,6 +514,15 @@ struct ScriptureView: View {
 
             scripture = todayScripture
 
+            // Checks whether the user already
+            // saved this verse.
+            isSaved =
+                await scriptureService
+                    .isScriptureSaved(
+                        reference: todayScripture
+                            .verseReference
+                    )
+
             // Logs the view for signed-in users;
             // does nothing when not signed in.
             await scriptureService
@@ -444,6 +538,63 @@ struct ScriptureView: View {
         }
 
         isLoading = false
+    }
+
+    // MARK: - Toggle Save
+    // Saves today's verse if it isn't saved yet,
+    // or removes it if it already is.
+
+    private func toggleSave() async {
+
+        guard
+            let scripture,
+            !isSavingScripture
+        else {
+            return
+        }
+
+        isSavingScripture = true
+
+        do {
+
+            if isSaved {
+
+                try await scriptureService
+                    .removeSavedScripture(
+                        reference: scripture
+                            .verseReference
+                    )
+            }
+
+            else {
+
+                try await scriptureService
+                    .saveScripture(
+                        reference: scripture
+                            .verseReference,
+                        text: scripture.verseText
+                    )
+            }
+
+            isSaved.toggle()
+        }
+
+        catch {
+
+            // Saving requires a signed-in account;
+            // other failures show a generic message.
+            if error is AuthError {
+                saveError =
+                    "Sign in to save Scriptures to your account."
+            } else {
+                saveError =
+                    "HopeLine couldn't save this Scripture. Check your internet connection and try again."
+            }
+
+            showSaveError = true
+        }
+
+        isSavingScripture = false
     }
 }
 
@@ -558,6 +709,9 @@ private struct ThemeScripturesView: View {
 
     // The verse the user tapped to hold onto.
     @State private var selectedScripture: ThemeScripture?
+
+    // Shown when the theme reflection sheet is open.
+    @State private var showThemeReflection = false
 
     // Uses the shared service instance — ScriptureService
     // has a private initializer (singleton pattern).
@@ -696,6 +850,31 @@ private struct ThemeScripturesView: View {
                                 selectedScripture = scripture
                             }
                         }
+
+                        // Opens the reflection sheet with the
+                        // selected Scripture pre-filled.
+                        if let selectedScripture {
+
+                            Button {
+                                showThemeReflection = true
+                            } label: {
+
+                                Label(
+                                    "Reflect in Journal",
+                                    systemImage:
+                                        "square.and.pencil"
+                                )
+                                .fontWeight(.semibold)
+                                .frame(
+                                    maxWidth: .infinity
+                                )
+                            }
+                            .buttonStyle(
+                                .borderedProminent
+                            )
+                            .controlSize(.large)
+                            .padding(.top, 8)
+                        }
                     }
                 }
                 .padding()
@@ -713,6 +892,31 @@ private struct ThemeScripturesView: View {
                     ) {
                         dismiss()
                     }
+                }
+            }
+            .sheet(
+                isPresented: $showThemeReflection
+            ) {
+
+                // The Journal reflection sheet, pre-filled
+                // with the selected theme Scripture.
+                if let selectedScripture {
+
+                    ScriptureReflectionView(
+                        verseReference:
+                            selectedScripture
+                                .verseReference,
+                        verseText:
+                            selectedScripture
+                                .verseText
+                    ) {
+                        // Called when the reflection is
+                        // saved to the Journal.
+                        showReflectionSaved = true
+                    }
+                    .presentationDetents(
+                        [.large]
+                    )
                 }
             }
             .task {

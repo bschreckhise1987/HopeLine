@@ -106,6 +106,129 @@ final class ScriptureService {
         return scriptures
     }
 
+    // MARK: - Save Scripture
+    // Saves a verse to the user's saved Scriptures.
+    // Throws when the user isn't signed in.
+
+    func saveScripture(
+        reference: String,
+        text: String
+    ) async throws {
+
+        let user =
+            try await supabase.auth.user()
+
+        struct SavedInsert: Encodable {
+
+            let userId: UUID
+            let verseReference: String
+            let verseText: String
+
+            enum CodingKeys: String, CodingKey {
+
+                case userId = "user_id"
+                case verseReference = "verse_reference"
+                case verseText = "verse_text"
+            }
+        }
+
+        let saved = SavedInsert(
+            userId: user.id,
+            verseReference: reference,
+            verseText: text
+        )
+
+        try await supabase
+            .from("saved_scriptures")
+            .insert(saved)
+            .execute()
+    }
+
+    // MARK: - Remove Saved Scripture
+    // Un-saves a verse for the signed-in user.
+
+    func removeSavedScripture(
+        reference: String
+    ) async throws {
+
+        let user =
+            try await supabase.auth.user()
+
+        try await supabase
+            .from("saved_scriptures")
+            .delete()
+            .eq(
+                "user_id",
+                value: user.id
+            )
+            .eq(
+                "verse_reference",
+                value: reference
+            )
+            .execute()
+    }
+
+    // MARK: - Check if Scripture is Saved
+    // Returns whether the signed-in user has already
+    // saved this verse. Returns false when the user
+    // isn't signed in — saving just isn't offered yet.
+
+    func isScriptureSaved(
+        reference: String
+    ) async -> Bool {
+
+        guard
+            let userId =
+                try? await supabase.auth.user().id
+        else {
+            return false
+        }
+
+        let saved: [SavedScripture] =
+            (try? await supabase
+                .from("saved_scriptures")
+                .select()
+                .eq(
+                    "user_id",
+                    value: userId
+                )
+                .eq(
+                    "verse_reference",
+                    value: reference
+                )
+                .execute()
+                .value) ?? []
+
+        return !saved.isEmpty
+    }
+
+    // MARK: - Fetch Saved Scriptures
+    // Returns everything the signed-in user has saved,
+    // newest first.
+
+    func fetchSavedScriptures() async throws -> [SavedScripture] {
+
+        let user =
+            try await supabase.auth.user()
+
+        let saved: [SavedScripture] =
+            try await supabase
+            .from("saved_scriptures")
+            .select()
+            .eq(
+                "user_id",
+                value: user.id
+            )
+            .order(
+                "created_at",
+                ascending: false
+            )
+            .execute()
+            .value
+
+        return saved
+    }
+
     // MARK: - Record Scripture View
     // Saves a row to `scripture_activity` when the user
     // opens a Scripture, so HopeLine can eventually show
