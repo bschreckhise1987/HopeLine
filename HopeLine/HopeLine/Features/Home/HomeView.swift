@@ -14,7 +14,9 @@ struct HomeView: View {
     // Today's Scripture shown in the Home card.
     @State private var dailyScripture: DailyScripture?
 
-    private let scriptureService = ScriptureService()
+    // Uses the shared service instance — ScriptureService
+    // has a private initializer (singleton pattern).
+    private let scriptureService = ScriptureService.shared
 
     var body: some View {
         NavigationStack {

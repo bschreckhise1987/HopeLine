@@ -162,8 +162,10 @@ final class NearbyMeetingService {
             radiusMiles: radiusMiles
         )
 
+        // Calls the database function through the
+        // current (non-deprecated) client method.
         let meetings: [NearbyMeeting] =
-            try await SupabaseManager.shared.client.database
+            try await SupabaseManager.shared.client
             .rpc(
                 "nearby_meetings",
                 params: params

@@ -113,7 +113,7 @@ final class ScriptureService {
 
         // A failed activity log should never block or
         // interrupt the user's Scripture experience.
-        try? await supabase
+        _ = try? await supabase
             .from("scripture_activity")
             .insert(activity)
             .execute()
