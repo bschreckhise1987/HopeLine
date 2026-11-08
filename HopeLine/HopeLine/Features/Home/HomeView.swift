@@ -200,11 +200,11 @@ struct HomeView: View {
                 ToolbarItem(
                     placement: .topBarTrailing
                 ) {
-                    Button {
-                        // Settings navigation will go here
-                    } label: {
+                    NavigationLink {
+                        SettingsView()                    } label: {
                         Image(systemName: "gearshape.fill")
                     }
+                        .accessibilityLabel("Settings")
                 }
             }
         }

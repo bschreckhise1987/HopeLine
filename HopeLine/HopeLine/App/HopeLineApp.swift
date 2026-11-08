@@ -7,15 +7,45 @@
 
 import SwiftUI
 
+
 @main
 struct HopeLineApp: App {
 
-    @StateObject private var authManager = AuthManager()
+    // MARK: - Authentication
+
+    @StateObject private var authManager =
+        AuthManager()
+
+
+    // MARK: - Appearance
+
+    @AppStorage("appearancePreference")
+    private var appearancePreference =
+        AppearanceOption.system.rawValue
+
+
+    private var preferredColorScheme:
+        ColorScheme? {
+
+        AppearanceOption(
+            rawValue: appearancePreference
+        )?.colorScheme
+    }
+
+
+    // MARK: - App
 
     var body: some Scene {
+
         WindowGroup {
+
             AuthenticationRootView()
-                .environmentObject(authManager)
+                .environmentObject(
+                    authManager
+                )
+                .preferredColorScheme(
+                    preferredColorScheme
+                )
         }
     }
 }
