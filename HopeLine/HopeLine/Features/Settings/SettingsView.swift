@@ -129,7 +129,8 @@ struct SettingsView: View {
 
                         Picker(
                             "Appearance",
-                            selection: selectedAppearance
+                            selection:
+                                selectedAppearance
                         ) {
 
                             ForEach(
@@ -202,7 +203,8 @@ struct SettingsView: View {
                     HStack(spacing: 14) {
 
                         SettingsIcon(
-                            systemName: "bell.fill",
+                            systemName:
+                                "bell.fill",
                             color: .orange
                         )
 
@@ -232,6 +234,9 @@ struct SettingsView: View {
                                 $notificationsEnabled
                         )
                         .labelsHidden()
+                        .accessibilityLabel(
+                            "Notifications"
+                        )
                     }
                 }
 
@@ -299,6 +304,9 @@ struct SettingsView: View {
                                 $meetingLocationEnabled
                         )
                         .labelsHidden()
+                        .accessibilityLabel(
+                            "Meeting Location"
+                        )
                     }
                 }
 
@@ -402,7 +410,7 @@ struct SettingsView: View {
 
                     Button {
 
-                        // Terms and Resources
+                        // Terms & Resources
                         // connection comes later.
 
                     } label: {
@@ -612,11 +620,16 @@ private struct SettingsRow: View {
                     .font(.headline)
                     .foregroundStyle(.primary)
 
+
                 Text(subtitle)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(
                         .leading
+                    )
+                    .fixedSize(
+                        horizontal: false,
+                        vertical: true
                     )
             }
 
@@ -669,6 +682,7 @@ private struct SettingsIcon: View {
                 cornerRadius: 10
             )
         )
+        .accessibilityHidden(true)
     }
 }
 
@@ -741,22 +755,37 @@ private struct AccessibilitySettingsView:
 
             Section {
 
-                Toggle(
-                    "Enhanced Readability",
+                AccessibilityPreferenceToggle(
+                    title:
+                        "Enhanced Readability",
+                    description:
+                        "Uses larger text throughout HopeLine.",
+                    systemImage:
+                        "textformat.size.larger",
                     isOn:
                         $enhancedReadability
                 )
 
 
-                Toggle(
-                    "Reduce Visual Effects",
+                AccessibilityPreferenceToggle(
+                    title:
+                        "Reduce Visual Effects",
+                    description:
+                        "Reduces HopeLine animations and transitions.",
+                    systemImage:
+                        "sparkles",
                     isOn:
                         $reduceVisualEffects
                 )
 
 
-                Toggle(
-                    "Always Show Text Labels",
+                AccessibilityPreferenceToggle(
+                    title:
+                        "Always Show Text Labels",
+                    description:
+                        "Shows text with supported HopeLine icons.",
+                    systemImage:
+                        "character.bubble.fill",
                     isOn:
                         $alwaysShowLabels
                 )
@@ -771,7 +800,7 @@ private struct AccessibilitySettingsView:
 
                 Text(
                     """
-                    These preferences adjust how HopeLine presents information without changing your iPhone's accessibility settings.
+                    These preferences apply throughout HopeLine and do not change your iPhone's accessibility settings.
                     """
                 )
             }
@@ -920,6 +949,77 @@ private struct AccessibilitySettingsView:
 }
 
 
+// MARK: - Accessibility Preference Toggle
+
+private struct AccessibilityPreferenceToggle:
+    View {
+
+    let title: String
+
+    let description: String
+
+    let systemImage: String
+
+    @Binding
+    var isOn: Bool
+
+
+    var body: some View {
+
+        HStack(
+            alignment: .center,
+            spacing: 12
+        ) {
+
+            Image(
+                systemName:
+                    systemImage
+            )
+            .font(.headline)
+            .foregroundStyle(.blue)
+            .frame(width: 26)
+            .accessibilityHidden(true)
+
+
+            VStack(
+                alignment: .leading,
+                spacing: 4
+            ) {
+
+                Text(title)
+                    .font(.headline)
+
+
+                Text(description)
+                    .font(.caption)
+                    .foregroundStyle(
+                        .secondary
+                    )
+                    .fixedSize(
+                        horizontal: false,
+                        vertical: true
+                    )
+            }
+
+
+            Spacer()
+
+
+            Toggle(
+                "",
+                isOn: $isOn
+            )
+            .labelsHidden()
+            .accessibilityLabel(title)
+            .accessibilityHint(
+                description
+            )
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+
 // MARK: - Accessibility Status Row
 
 private struct AccessibilityStatusRow:
@@ -940,10 +1040,9 @@ private struct AccessibilityStatusRow:
                 systemName:
                     systemImage
             )
-            .foregroundStyle(
-                .blue
-            )
+            .foregroundStyle(.blue)
             .frame(width: 24)
+            .accessibilityHidden(true)
 
 
             Text(title)
@@ -968,6 +1067,12 @@ private struct AccessibilityStatusRow:
                     : .secondary
             )
         }
+        .accessibilityElement(
+            children: .combine
+        )
+        .accessibilityLabel(
+            "\(title), \(enabled ? "On" : "Off")"
+        )
     }
 }
 
@@ -978,10 +1083,12 @@ private struct ScriptureSettingsView:
     View {
 
     @Binding
-    var personalizedScriptureEnabled: Bool
+    var personalizedScriptureEnabled:
+        Bool
 
     @Binding
-    var checkInScriptureEnabled: Bool
+    var checkInScriptureEnabled:
+        Bool
 
 
     var body: some View {
@@ -1107,9 +1214,7 @@ private struct PrivacySettingsView:
                     "HopeLine privacy settings and information will appear here."
                 )
         )
-        .navigationTitle(
-            "Privacy"
-        )
+        .navigationTitle("Privacy")
     }
 }
 
@@ -1207,9 +1312,7 @@ private struct AboutHopeLineView:
                         "Support When It Matters Most"
                     )
                     .font(.headline)
-                    .foregroundStyle(
-                        .blue
-                    )
+                    .foregroundStyle(.blue)
                 }
 
 
