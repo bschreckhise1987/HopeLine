@@ -19,6 +19,8 @@ struct HopeLineApp: App {
 
     // MARK: - Appearance
 
+    // The user's appearance choice (System/Light/Dark), saved to the device
+    // with @AppStorage so it persists across app launches.
     @AppStorage("appearancePreference")
     private var appearancePreference =
         AppearanceOption.system.rawValue
@@ -26,6 +28,8 @@ struct HopeLineApp: App {
 
     // MARK: - Accessibility
 
+    // The three in-app accessibility preferences. Each one is read here at the
+    // root so it can be applied to the entire view hierarchy at once.
     @AppStorage("enhancedReadability")
     private var enhancedReadability = false
 
@@ -38,6 +42,8 @@ struct HopeLineApp: App {
 
     // MARK: - Preferred Color Scheme
 
+    // Converts the saved appearance choice into a ColorScheme for
+    // .preferredColorScheme(). Nil (System) means follow the device setting.
     private var preferredColorScheme:
         ColorScheme? {
 
@@ -77,6 +83,8 @@ struct HopeLineApp: App {
 
 // MARK: - HopeLine Accessibility Modifier
 
+// Applies all three in-app accessibility preferences to the whole app at
+// once: larger text, reduced animations, and always-visible labels.
 private struct HopeLineAccessibilityModifier:
     ViewModifier {
 
@@ -132,6 +140,8 @@ private struct HopeLineAccessibilityModifier:
 
 // MARK: - Enhanced Readability Modifier
 
+// When Enhanced Readability is on, bumps the app's text up to a larger
+// Dynamic Type size so every supported label gets bigger.
 private struct EnhancedReadabilityModifier:
     ViewModifier {
 
@@ -160,6 +170,8 @@ private struct EnhancedReadabilityModifier:
 
 // MARK: - Label Style Modifier
 
+// When Always Show Text Labels is on, switches every Label in the app to
+// show both its title and icon instead of icon-only.
 private struct HopeLineLabelStyleModifier:
     ViewModifier {
 

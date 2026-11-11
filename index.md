@@ -14,6 +14,7 @@ Welcome to the official development blog for **HopeLine**, a mobile application 
 - [November 4, 2026 - Building a Location-Aware Recovery Meeting Finder](./blog/2026-11-04.md)
 - [November 5, 2026 - From Sample Data to 23,745 Real Meetings](./blog/2026-11-05.md)
 - [November 6, 2026 - Daily Scripture: Encouragement That Meets You Where You Are](./blog/2026-11-06.md)
+- [November 11, 2026 - A Settings Screen That Grows With HopeLine](./blog/2026-11-11.md)
 ---
 
 ## About the Project

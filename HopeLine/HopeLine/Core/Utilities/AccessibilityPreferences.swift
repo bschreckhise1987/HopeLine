@@ -10,6 +10,9 @@ import SwiftUI
 
 // MARK: - Enhanced Readability
 
+// Custom environment value so any view in the app can read whether the
+// user turned on Enhanced Readability, without passing the preference
+// down through every view initializer.
 private struct HopeLineEnhancedReadabilityKey:
     EnvironmentKey {
 
@@ -38,6 +41,8 @@ extension EnvironmentValues {
 
 // MARK: - Reduce Visual Effects
 
+// Environment value that views can read to skip or soften their animations
+// when the user prefers fewer visual effects.
 private struct HopeLineReduceVisualEffectsKey:
     EnvironmentKey {
 
@@ -66,6 +71,8 @@ extension EnvironmentValues {
 
 // MARK: - Always Show Labels
 
+// Environment value that views can read to show text alongside icons
+// when the user wants labels visible.
 private struct HopeLineAlwaysShowLabelsKey:
     EnvironmentKey {
 

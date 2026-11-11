@@ -31,6 +31,9 @@ struct SettingsView: View {
 
     // MARK: - Appearance Binding
 
+    // Bridges @AppStorage (a String) and the Picker (which wants an
+    // AppearanceOption). Reading converts the saved String back into an
+    // option; writing stores the user's new choice to @AppStorage.
     private var selectedAppearance:
         Binding<AppearanceOption> {
 
@@ -539,6 +542,8 @@ struct SettingsView: View {
 
 // MARK: - Settings Section
 
+// A titled card that groups related settings rows, styled like Apple's
+// inset grouped Settings sections.
 private struct SettingsSection<
     Content: View
 >: View {
@@ -588,6 +593,8 @@ private struct SettingsSection<
 
 // MARK: - Settings Row
 
+// A single settings row: colored icon, title, subtitle, and an optional
+// navigation chevron. Reused by every row on the Settings screen.
 private struct SettingsRow: View {
 
     let icon: String
@@ -656,6 +663,8 @@ private struct SettingsRow: View {
 
 // MARK: - Settings Icon
 
+// The rounded colored tile shown at the start of each settings row.
+// Hidden from VoiceOver because the row's title already describes it.
 private struct SettingsIcon: View {
 
     let systemName: String
@@ -689,6 +698,7 @@ private struct SettingsIcon: View {
 
 // MARK: - Divider
 
+// A divider indented so it lines up with the row text instead of the icon.
 private struct SettingsDivider: View {
 
     var body: some View {
@@ -701,6 +711,9 @@ private struct SettingsDivider: View {
 
 // MARK: - Accessibility Settings
 
+// The Accessibility screen. Split into two halves: HopeLine's own
+// accessibility toggles (which change the app immediately) and read-only
+// status rows reflecting the device's accessibility settings.
 private struct AccessibilitySettingsView:
     View {
 
@@ -951,6 +964,8 @@ private struct AccessibilitySettingsView:
 
 // MARK: - Accessibility Preference Toggle
 
+// One of HopeLine's own accessibility rows: icon, title, description,
+// and a toggle. Includes VoiceOver label and hint for each switch.
 private struct AccessibilityPreferenceToggle:
     View {
 
@@ -1022,6 +1037,9 @@ private struct AccessibilityPreferenceToggle:
 
 // MARK: - Accessibility Status Row
 
+// A read-only row showing whether a device-level accessibility setting
+// (Reduce Motion, etc.) is currently on. Users adjust these in the
+// iPhone's own Settings app; HopeLine just displays their status.
 private struct AccessibilityStatusRow:
     View {
 
@@ -1079,6 +1097,9 @@ private struct AccessibilityStatusRow:
 
 // MARK: - Scripture Settings
 
+// Scripture preferences: the personalization toggles that will control
+// how Daily Scripture connects with the user's journey once those
+// features ship, plus a link to saved Scriptures.
 private struct ScriptureSettingsView:
     View {
 
@@ -1156,6 +1177,7 @@ private struct ScriptureSettingsView:
 
 // MARK: - Account Placeholder
 
+// Temporary screen for Account management until that feature is built.
 private struct AccountPlaceholderView:
     View {
 
@@ -1177,6 +1199,7 @@ private struct AccountPlaceholderView:
 
 // MARK: - Recovery Preferences
 
+// Temporary screen for recovery personalization until that feature is built.
 private struct RecoveryPreferencesView:
     View {
 
@@ -1200,6 +1223,7 @@ private struct RecoveryPreferencesView:
 
 // MARK: - Privacy
 
+// Temporary screen for privacy options until that feature is built.
 private struct PrivacySettingsView:
     View {
 
@@ -1221,6 +1245,8 @@ private struct PrivacySettingsView:
 
 // MARK: - My Data
 
+// Lists the kinds of personal data HopeLine stores. Will eventually show
+// real counts and export/delete options for each category.
 private struct MyDataView: View {
 
     var body: some View {
@@ -1263,6 +1289,8 @@ private struct MyDataView: View {
 
 // MARK: - Saved Scriptures Placeholder
 
+// Temporary screen for the saved Scripture collection until it lists
+// the user's real saved verses.
 private struct SavedScripturesPlaceholderView:
     View {
 
@@ -1286,6 +1314,7 @@ private struct SavedScripturesPlaceholderView:
 
 // MARK: - About HopeLine
 
+// App information: purpose, project background, and acknowledgments.
 private struct AboutHopeLineView:
     View {
 
