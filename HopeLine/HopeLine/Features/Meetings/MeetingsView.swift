@@ -9,8 +9,12 @@ import SwiftUI
 import MapKit
 import CoreLocation
 
+// The Recovery Meetings screen. Uses the phone's location to load real
+// NA meetings from Supabase (already sorted by distance), pins them on
+// a map, and lists them with search and type filters.
 struct MeetingsView: View {
 
+    // Owns the user's location and permission state.
     @StateObject private var locationService = LocationService()
     @State private var searchText = ""
     @State private var selectedFilter: MeetingFilter = .all
@@ -19,6 +23,8 @@ struct MeetingsView: View {
 
     // MARK: - Live Meeting State
 
+    // The real meetings loaded from the nearby_meetings database
+    // function, closest first.
     @State private var nearbyMeetings: [NearbyMeeting] = []
     @State private var isLoadingMeetings = false
     @State private var meetingsErrorMessage: String?
@@ -322,6 +328,8 @@ struct MeetingsView: View {
         .task {
             locationService.requestLocation()
         }
+        // Whenever a location arrives, center the map on it and load
+        // the meetings around it.
         .onChange(of: locationService.currentLocation) { _, location in
 
             guard let location else {
@@ -346,6 +354,9 @@ struct MeetingsView: View {
 
     // MARK: - Load Meetings
 
+    // Calls the nearby_meetings database function with widening search
+    // radii (10, 25, 50, then 100 miles) so rural users still get
+    // results.
     private func loadMeetings(near location: CLLocation) async {
 
         isLoadingMeetings = true
@@ -372,6 +383,8 @@ struct MeetingsView: View {
 
     // MARK: - Directions
 
+    // Opens Apple Maps with the meeting as the destination. Only
+    // in-person meetings have coordinates to route to.
     private func openDirections(to meeting: NearbyMeeting) {
 
         guard let coordinate = meeting.coordinate
@@ -400,6 +413,8 @@ struct MeetingsView: View {
 
     // MARK: - Filtered Meetings
 
+    // The nearby meetings after the type filter (All/In Person/Online)
+    // and search text are applied — this is what the list shows.
     private var filteredMeetings: [NearbyMeeting] {
 
         nearbyMeetings.filter { meeting in
@@ -442,6 +457,8 @@ struct MeetingsView: View {
 
 // MARK: - Meeting Card
 
+// One meeting in the list: name, type badge, distance, day and time,
+// location, and a Join (online) or Directions (in person) button.
 private struct MeetingCard: View {
 
     let meeting: NearbyMeeting
@@ -567,6 +584,7 @@ private struct MeetingCard: View {
 
 // MARK: - Meeting Type Badge
 
+// The small colored capsule showing "In Person" or "Online".
 private struct MeetingTypeBadge: View {
 
     let type: MeetingType
@@ -593,6 +611,7 @@ private struct MeetingTypeBadge: View {
 
 // MARK: - Meeting Type
 
+// Display info (title, icon, color) for the two kinds of meetings.
 private enum MeetingType {
 
     case inPerson
@@ -637,6 +656,7 @@ private enum MeetingType {
 
 // MARK: - Meeting Filter
 
+// The segmented control's options: All, In Person, Online.
 private enum MeetingFilter:
     String,
     CaseIterable,
@@ -668,6 +688,8 @@ private enum MeetingFilter:
 
 // MARK: - Nearby Meeting Display Helpers
 
+// Joins address, city, and state into one readable line, or a
+// fallback when the meeting has no address on file.
 private extension NearbyMeeting {
 
     var locationDescription: String {

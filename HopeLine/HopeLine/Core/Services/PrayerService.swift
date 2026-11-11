@@ -11,6 +11,8 @@ import Supabase
 
 // MARK: - Prayer Request
 
+// One prayer request from the prayer_requests table. CodingKeys map
+// Swift's camelCase properties to the database's snake_case columns.
 struct PrayerRequest: Codable, Identifiable {
 
     let id: UUID
@@ -33,6 +35,7 @@ struct PrayerRequest: Codable, Identifiable {
 
 // MARK: - Prayer Response
 
+// One "I prayed for this" from a user, linked to a prayer request.
 struct PrayerResponse: Codable, Identifiable {
 
     let id: UUID
@@ -51,6 +54,9 @@ struct PrayerResponse: Codable, Identifiable {
 
 // MARK: - Community Prayer
 
+// A prayer request bundled with how many people have prayed for it
+// and whether the current user is one of them — the shape the
+// Prayer screen actually displays.
 struct CommunityPrayer: Identifiable {
 
     let prayer: PrayerRequest
@@ -64,6 +70,7 @@ struct CommunityPrayer: Identifiable {
 
 // MARK: - Prayer Answer Update Model
 
+// The fields sent when marking a prayer as answered.
 private struct PrayerAnswerUpdate: Encodable {
 
     let isAnswered: Bool
@@ -78,6 +85,9 @@ private struct PrayerAnswerUpdate: Encodable {
 
 // MARK: - Prayer Service
 
+// Saves and loads prayer requests and responses in Supabase, and builds
+// the CommunityPrayer objects the Prayer screen displays. Accessed as
+// PrayerService.shared — use the singleton, never init one directly.
 final class PrayerService {
 
     static let shared = PrayerService()
@@ -87,6 +97,7 @@ final class PrayerService {
 
     // MARK: - Prayer Request Insert Model
 
+    // The insert shape for a new prayer request.
     private struct PrayerRequestInsert: Encodable {
 
         let userId: UUID
@@ -101,6 +112,7 @@ final class PrayerService {
 
     // MARK: - Prayer Response Insert Model
 
+    // The insert shape for one "I prayed for this" response.
     private struct PrayerResponseInsert: Encodable {
 
         let prayerRequestId: UUID
@@ -115,6 +127,8 @@ final class PrayerService {
 
     // MARK: - Share Prayer Request
 
+    // Posts a new prayer request for the signed-in user to the
+    // community prayer list. Rejects empty requests.
     func sharePrayer(
         requestText: String
     ) async throws {
@@ -145,6 +159,8 @@ final class PrayerService {
 
     // MARK: - Fetch Community Prayers
 
+    // Loads every prayer request with its prayer count and whether the
+    // current user has already prayed, newest first.
     func fetchCommunityPrayers() async throws -> [CommunityPrayer] {
 
         let currentUser = try await SupabaseManager.shared.client
@@ -206,6 +222,8 @@ final class PrayerService {
 
     // MARK: - Fetch My Prayer Requests
 
+    // Like fetchCommunityPrayers, but only the signed-in user's own
+    // requests — used by the "My Prayer Requests" tab.
     func fetchMyPrayers() async throws -> [CommunityPrayer] {
 
         let currentUser = try await SupabaseManager.shared.client
@@ -271,6 +289,8 @@ final class PrayerService {
 
     // MARK: - Pray For Request
 
+    // Records that the signed-in user prayed for a request, adding to
+    // that request's prayer count.
     func prayForRequest(
         prayerRequestId: UUID
     ) async throws {
@@ -293,6 +313,9 @@ final class PrayerService {
 
     // MARK: - Mark Prayer as Answered
 
+    // Marks one of the user's own requests as answered, with an optional
+    // note about how it was answered. The user_id filter means only the
+    // request's owner can mark it.
     func markAsAnswered(
         prayerRequestId: UUID,
         answeredNote: String?
@@ -332,6 +355,7 @@ final class PrayerService {
 
 // MARK: - Prayer Errors
 
+// User-friendly errors the prayer UI can show directly.
 enum PrayerError: LocalizedError {
 
     case emptyRequest

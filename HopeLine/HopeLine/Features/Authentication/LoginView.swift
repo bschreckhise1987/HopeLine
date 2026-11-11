@@ -7,10 +7,13 @@
 
 import SwiftUI
 
+// The sign-in screen. Email and password go straight to AuthManager,
+// which flips the app to Home on success.
 struct LoginView: View {
 
     @EnvironmentObject var auth: AuthManager
 
+    // The user's credentials and sign-in state.
     @State private var email = ""
     @State private var password = ""
     @State private var errorMessage = ""
@@ -68,6 +71,8 @@ struct LoginView: View {
         }
     }
 
+    // Signs in with the entered credentials. The Log In button shows a
+    // spinner and disables itself while the request is in flight.
     private func login() {
         errorMessage = ""
         isLoggingIn = true

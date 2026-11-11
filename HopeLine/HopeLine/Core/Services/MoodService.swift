@@ -8,14 +8,19 @@
 import Foundation
 import Supabase
 
+// Handles the daily check-in: reads the available moods and saves each
+// check-in (category, notes, and selected moods) to Supabase.
 final class MoodService {
 
     // MARK: - Properties
 
+    // The shared Supabase client used for all mood and check-in queries.
     private let supabase = SupabaseManager.shared.client
 
     // MARK: - Fetch Moods
 
+    // Loads every mood option, sorted by category then name so the
+    // check-in UI can group them cleanly.
     func fetchMoods() async throws -> [Mood] {
         let moods: [Mood] = try await supabase
             .from("moods")
@@ -34,6 +39,9 @@ final class MoodService {
 
     // MARK: - Create Check-In
 
+    // Saves one daily check-in: inserts the check-in row (category and
+    // notes), then links each selected mood to it, and returns the saved
+    // check-in so the UI can show a confirmation.
     func createCheckIn(
         userId: UUID,
         category: String,
@@ -65,6 +73,8 @@ final class MoodService {
 
     // MARK: - Save Mood Selections
 
+    // Links the user's selected moods to a check-in. Inserted in one
+    // batch so the check-in and its moods save together.
     private func saveMoodSelections(
         checkInId: UUID,
         moods: [Mood]
@@ -89,6 +99,8 @@ final class MoodService {
 
     // MARK: - Helpers
 
+    // Trims whitespace from optional notes and returns nil if nothing
+    // meaningful was typed, so empty notes aren't saved to the database.
     private func cleanedNotes(
         _ notes: String?
     ) -> String? {
@@ -109,6 +121,8 @@ final class MoodService {
 
 // MARK: - New Mood Check-In
 
+// The insert shape for a new check-in row. CodingKeys map to the
+// database's snake_case column names.
 private struct NewMoodCheckIn: Encodable {
 
     let userId: UUID
@@ -124,6 +138,7 @@ private struct NewMoodCheckIn: Encodable {
 
 // MARK: - New Mood Selection
 
+// The insert shape linking one selected mood to a check-in.
 private struct NewMoodSelection: Encodable {
 
     let checkInId: UUID

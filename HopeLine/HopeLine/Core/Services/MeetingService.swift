@@ -10,6 +10,11 @@ import Foundation
 
 // MARK: - Meeting Service
 
+// Loads meeting feeds from BMLT servers in the open Meeting Guide JSON
+// format and provides local filtering helpers (search, in-person,
+// online, mappable). The live Meetings screen mostly uses
+// NearbyMeetingService + Supabase now; this service handles raw feed
+// fetching and client-side filtering.
 final class MeetingService {
 
     static let shared = MeetingService()
@@ -19,6 +24,9 @@ final class MeetingService {
 
     // MARK: - Fetch Meetings
 
+    // Downloads and decodes a meeting feed from a BMLT server. Skips the
+    // cache so the data is always fresh, times out after 30 seconds,
+    // and gives each failure mode its own error.
     func fetchMeetings(
         from feedURL: URL
     ) async throws -> [Meeting] {
@@ -70,6 +78,8 @@ final class MeetingService {
 
     // MARK: - Search Meetings
 
+    // Case-insensitive search across name, location, city, state, zip
+    // code, and group. Empty search text returns everything.
     func searchMeetings(
         _ meetings: [Meeting],
         searchText: String
@@ -131,6 +141,7 @@ final class MeetingService {
 
     // MARK: - In-Person Meetings
 
+    // Only meetings that happen at a physical location.
     func inPersonMeetings(
         from meetings: [Meeting]
     ) -> [Meeting] {
@@ -143,6 +154,7 @@ final class MeetingService {
 
     // MARK: - Online Meetings
 
+    // Only meetings that happen online (video/phone).
     func onlineMeetings(
         from meetings: [Meeting]
     ) -> [Meeting] {
@@ -155,6 +167,8 @@ final class MeetingService {
 
     // MARK: - Meetings With Map Coordinates
 
+    // Only meetings that have latitude/longitude, so they can be pinned
+    // on the map.
     func meetingsWithCoordinates(
         from meetings: [Meeting]
     ) -> [Meeting] {
@@ -168,6 +182,7 @@ final class MeetingService {
 
 // MARK: - Meeting Service Error
 
+// User-friendly errors for every way a meeting feed can fail.
 enum MeetingServiceError: LocalizedError {
 
     case invalidResponse

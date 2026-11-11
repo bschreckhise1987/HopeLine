@@ -7,6 +7,8 @@
 
 import SwiftUI
 
+// The app's root gate: shows a spinner while the saved session is being
+// restored, the login screen when signed out, and Home when signed in.
 struct AuthenticationRootView: View {
 
     @EnvironmentObject var auth: AuthManager

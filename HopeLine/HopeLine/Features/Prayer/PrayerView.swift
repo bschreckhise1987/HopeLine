@@ -7,6 +7,8 @@
 
 import SwiftUI
 
+// The Prayer screen: community prayer requests on one tab, the user's
+// own requests on the other, plus a sheet for sharing a new request.
 struct PrayerView: View {
 
     @State private var selectedTab: PrayerTab = .community
@@ -248,6 +250,8 @@ struct PrayerView: View {
 
     // MARK: - Load Prayers
 
+    // Loads both tabs at once — community prayers and the user's own
+    // requests — in parallel.
     @MainActor
     private func loadPrayers() async {
 
@@ -282,6 +286,8 @@ struct PrayerView: View {
 
     // MARK: - Pray For Request
 
+    // Records that the user prayed for a community request, then
+    // refreshes so the count and "You Prayed" state update.
     @MainActor
     private func prayFor(
         _ prayer: CommunityPrayer
@@ -311,6 +317,8 @@ struct PrayerView: View {
 
     // MARK: - Mark Prayer As Answered
 
+    // Marks one of the user's own requests as answered, with the
+    // optional note from the sheet, then refreshes.
     @MainActor
     private func markPrayerAsAnswered(
         _ prayer: CommunityPrayer,
@@ -460,6 +468,7 @@ struct PrayerView: View {
 
 // MARK: - Prayer Tab
 
+// The segmented control's two tabs: Community and My Requests.
 private enum PrayerTab:
     String,
     CaseIterable,
@@ -488,6 +497,9 @@ private enum PrayerTab:
 
 // MARK: - Prayer Request Card
 
+// One prayer request in the list. The owner sees "Mark as Answered";
+// everyone else sees the "I Prayed" button. The card handles its own
+// submitting state so double-taps can't double-send.
 private struct PrayerRequestCard: View {
 
     let prayer: CommunityPrayer
@@ -776,6 +788,9 @@ private struct PrayerRequestCard: View {
 
 // MARK: - Answered Prayer View
 
+// The sheet for marking a prayer answered: shows the original request,
+// an optional note about what God did (capped at 500 characters), and
+// a Save button.
 private struct AnsweredPrayerView: View {
 
     @Environment(\.dismiss)
@@ -1036,6 +1051,9 @@ private struct AnsweredPrayerView: View {
 
 // MARK: - New Prayer Request
 
+// The sheet for sharing a new prayer request with the community.
+// Includes the 500-character limit and a clear notice that the request
+// is shared publicly with HopeLine users.
 private struct NewPrayerRequestView: View {
 
     @Environment(\.dismiss)
@@ -1267,6 +1285,8 @@ private struct NewPrayerRequestView: View {
 
     // MARK: - Share Prayer
 
+    // Saves the request through PrayerService, refreshes the list, and
+    // dismisses the sheet. Errors surface in an alert.
     private func sharePrayer() {
 
         guard !isSharing else {

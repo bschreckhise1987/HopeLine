@@ -9,6 +9,9 @@ import SwiftUI
 internal import Auth
 import Supabase
 
+// The Daily Check-In screen: pick a category (like Struggling or
+// Encouraged), select the feelings that apply, optionally add a note,
+// then save the check-in to Supabase.
 struct CheckInView: View {
 
     // MARK: - Environment
@@ -17,6 +20,7 @@ struct CheckInView: View {
 
     // MARK: - Services
 
+    // Loads moods and saves check-ins.
     private let moodService = MoodService()
 
     // MARK: - State
@@ -35,6 +39,8 @@ struct CheckInView: View {
 
     // MARK: - Category Order
 
+    // The order categories should appear in, best first. Categories not
+    // in this list fall to the end alphabetically.
     private let preferredCategoryOrder = [
         "Encouraged",
         "Steady",
@@ -47,6 +53,8 @@ struct CheckInView: View {
 
     // MARK: - Computed Properties
 
+    // Every category that has moods, in the preferred order, with any
+    // unknown categories sorted on at the end.
     private var categories: [String] {
         let availableCategories = Set(
             moods.map(\.category)
@@ -65,6 +73,7 @@ struct CheckInView: View {
         return orderedCategories + remainingCategories
     }
 
+    // The moods for the currently selected category, sorted by name.
     private var displayedMoods: [Mood] {
         moods
             .filter {
@@ -75,6 +84,8 @@ struct CheckInView: View {
             }
     }
 
+    // The Save button is enabled only once a category and at least one
+    // mood are selected and nothing is currently saving.
     private var canSave: Bool {
         !selectedCategory.isEmpty &&
         !selectedMoods.isEmpty &&
@@ -197,6 +208,7 @@ struct CheckInView: View {
 
     // MARK: - Category
 
+    // The horizontal row of category pills the user picks from first.
     private var categorySection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("How would you describe today?")
@@ -224,6 +236,7 @@ struct CheckInView: View {
         }
     }
 
+    // One selectable category pill — blue when selected.
     private func categoryButton(
         for category: String
     ) -> some View {
@@ -254,6 +267,7 @@ struct CheckInView: View {
 
     // MARK: - Moods
 
+    // The grid of mood cards for the selected category.
     private var moodSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
@@ -297,6 +311,7 @@ struct CheckInView: View {
         }
     }
 
+    // One mood card: emoji, name, and a checkmark ring when selected.
     private func moodButton(
         for mood: Mood
     ) -> some View {
@@ -353,6 +368,7 @@ struct CheckInView: View {
 
     // MARK: - Reflection
 
+    // The optional note about what's happening today.
     private var reflectionSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("What's on your mind?")
@@ -387,6 +403,7 @@ struct CheckInView: View {
 
     // MARK: - Save
 
+    // The Save button with its loading state and encouragement caption.
     private var saveSection: some View {
         VStack(spacing: 12) {
             Button {
@@ -428,6 +445,8 @@ struct CheckInView: View {
 
     // MARK: - Load Moods
 
+    // Fetches the mood list when the screen appears and selects the
+    // first category by default.
     @MainActor
     private func loadMoods() async {
         isLoading = true
@@ -451,6 +470,8 @@ struct CheckInView: View {
 
     // MARK: - Save Check-In
 
+    // Saves the check-in for the signed-in user. Requires being signed
+    // in; shows a success alert and dismisses on completion.
     @MainActor
     private func saveCheckIn() async {
         guard canSave else {
@@ -488,6 +509,8 @@ struct CheckInView: View {
 
     // MARK: - Selection Helpers
 
+    // Switching categories clears the selected moods, since moods
+    // belong to their category.
     private func selectCategory(
         _ category: String
     ) {
@@ -499,6 +522,7 @@ struct CheckInView: View {
         selectedMoods.removeAll()
     }
 
+    // Taps a mood on or off the selected set.
     private func toggleMood(
         _ mood: Mood
     ) {

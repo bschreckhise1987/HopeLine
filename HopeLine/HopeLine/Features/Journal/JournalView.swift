@@ -7,6 +7,8 @@
 
 import SwiftUI
 
+// The Journal screen: lists the user's entries newest first, with a
+// button to write a new one in a sheet.
 struct JournalView: View {
 
     @State private var showingNewEntry = false
@@ -135,6 +137,8 @@ struct JournalView: View {
 
     // MARK: - Load Entries
 
+    // Fetches the user's journal entries. Runs on appear, on pull to
+    // refresh, and after saving a new entry.
     @MainActor
     private func loadEntries() async {
 
@@ -156,6 +160,7 @@ struct JournalView: View {
 
     // MARK: - Loading View
 
+    // Simple spinner row shown while entries load.
     private var loadingView: some View {
 
         HStack(spacing: 12) {
@@ -173,6 +178,7 @@ struct JournalView: View {
 
     // MARK: - Error View
 
+    // Shown when entries can't be loaded, with a retry button.
     private func errorView(message: String) -> some View {
 
         VStack(spacing: 12) {
@@ -209,6 +215,7 @@ struct JournalView: View {
 
     // MARK: - Empty Journal
 
+    // Friendly empty state for first-time journal users.
     private var emptyJournalView: some View {
 
         VStack(spacing: 14) {
@@ -241,6 +248,8 @@ struct JournalView: View {
 
 // MARK: - Journal Entry Card
 
+// One saved journal entry: the text, a divider, and the date it was
+// written.
 private struct JournalEntryCard: View {
 
     let entry: JournalEntry
@@ -289,6 +298,9 @@ private struct JournalEntryCard: View {
 
 // MARK: - New Journal Entry
 
+// The sheet for writing a new entry. The Save button stays disabled
+// until there's actual text, and the sheet can't be swiped away while
+// saving. Calls onSave after a successful save so the list refreshes.
 private struct NewJournalEntryView: View {
 
     @Environment(\.dismiss) private var dismiss
@@ -412,6 +424,8 @@ private struct NewJournalEntryView: View {
 
     // MARK: - Save Journal Entry
 
+    // Saves the entry through JournalService, then dismisses the sheet
+    // and refreshes the list. Errors surface in an alert.
     private func saveJournalEntry() {
 
         guard !isSaving else {

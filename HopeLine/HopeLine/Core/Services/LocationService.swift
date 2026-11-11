@@ -12,23 +12,32 @@ import Combine
 
 // MARK: - Location Service
 
+// Wraps CoreLocation so the rest of the app can read the user's location
+// without touching CLLocationManager directly. Views observe the
+// published properties; the delegate callbacks keep them updated.
 @MainActor
 final class LocationService: NSObject, ObservableObject {
 
     // MARK: - Published Properties
 
+    // The user's most recent location, published so views react when it arrives.
     @Published private(set) var currentLocation: CLLocation?
 
+    // The current location permission status, kept in sync by the delegate.
     @Published private(set) var authorizationStatus:
         CLAuthorizationStatus = .notDetermined
 
+    // True while a location request is in flight.
     @Published private(set) var isLoading = false
 
+    // A user-friendly message explaining any location problem.
     @Published var errorMessage: String?
 
 
     // MARK: - Location Manager
 
+    // The system location manager. Kilometer accuracy is plenty for
+    // finding nearby meetings and saves battery.
     private let locationManager =
         CLLocationManager()
 
@@ -51,6 +60,9 @@ final class LocationService: NSObject, ObservableObject {
 
     // MARK: - Request Location
 
+    // The main entry point. Checks that location services are on, then
+    // asks for permission, fetches the location, or explains why it
+    // can't — with a plain-language message for every permission state.
     func requestLocation() {
 
         errorMessage = nil
@@ -109,6 +121,8 @@ final class LocationService: NSObject, ObservableObject {
 
     // MARK: - Load Current Location
 
+    // Fetches the current location once permission is already granted.
+    // If permission hasn't been decided yet, falls back to requesting it.
     func loadCurrentLocation() {
 
         guard CLLocationManager
@@ -145,6 +159,9 @@ final class LocationService: NSObject, ObservableObject {
 
     // MARK: - Coordinates
 
+    // Convenience accessors so views can grab just what they need
+    // (for the nearby_meetings database function) without unwrapping
+    // the full CLLocation themselves.
     var latitude: Double? {
 
         currentLocation?
@@ -171,9 +188,13 @@ final class LocationService: NSObject, ObservableObject {
 
 // MARK: - CLLocationManagerDelegate
 
+// CLLocationManager calls these on a background thread, so each one hops
+// to the main actor before touching published state.
 extension LocationService:
     CLLocationManagerDelegate {
 
+    // Called whenever the permission status changes — including the
+    // moment the user answers the permission prompt.
     nonisolated func locationManagerDidChangeAuthorization(
         _ manager: CLLocationManager
     ) {
@@ -232,6 +253,8 @@ extension LocationService:
     }
 
 
+    // Called when the device reports a location. Keeps only the newest
+    // fix and clears any previous error.
     nonisolated func locationManager(
         _ manager: CLLocationManager,
         didUpdateLocations locations: [CLLocation]
@@ -256,6 +279,8 @@ extension LocationService:
     }
 
 
+    // Called when the location request fails. Stops the loading state
+    // and surfaces the error to the user.
     nonisolated func locationManager(
         _ manager: CLLocationManager,
         didFailWithError error: Error

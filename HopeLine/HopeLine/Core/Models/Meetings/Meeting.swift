@@ -8,6 +8,9 @@
 import Foundation
 import CoreLocation
 
+// One recovery meeting, decoded from the open Meeting Guide JSON format
+// that BMLT servers (and HopeLine's Supabase table) publish. Optional
+// fields exist because not every meeting has every piece of data.
 struct Meeting: Codable, Identifiable, Hashable {
 
     // MARK: - Required Meeting Guide Fields
@@ -66,6 +69,7 @@ struct Meeting: Codable, Identifiable, Hashable {
 
     // MARK: - Identifiable
 
+    // The slug is the meeting's unique identifier in the feed.
     var id: String {
         slug
     }
@@ -73,6 +77,8 @@ struct Meeting: Codable, Identifiable, Hashable {
 
     // MARK: - Coding Keys
 
+    // Maps Swift's camelCase properties to the feed's snake_case keys,
+    // matching the Meeting Guide JSON spec exactly.
     enum CodingKeys: String, CodingKey {
 
         case name
@@ -122,6 +128,8 @@ struct Meeting: Codable, Identifiable, Hashable {
 
     // MARK: - Meeting Type Helpers
 
+    // True when the meeting has a video or phone link, so it can be
+    // attended remotely.
     var isOnline: Bool {
 
         conferenceURL != nil ||
@@ -129,6 +137,8 @@ struct Meeting: Codable, Identifiable, Hashable {
     }
 
 
+    // True when the meeting has a street address, so it happens at a
+    // physical location.
     var isInPerson: Bool {
 
         address != nil ||
@@ -138,6 +148,8 @@ struct Meeting: Codable, Identifiable, Hashable {
 
     // MARK: - Map Coordinate
 
+    // The meeting's location as a map pin, or nil if it has no
+    // coordinates.
     var coordinate: CLLocationCoordinate2D? {
 
         guard
@@ -156,6 +168,9 @@ struct Meeting: Codable, Identifiable, Hashable {
 
     // MARK: - Display Address
 
+    // The best address to show: the feed's formatted address if it has
+    // one, otherwise the parts joined together. Falls back to
+    // "Online Meeting" or "Location unavailable".
     var displayAddress: String {
 
         if let formattedAddress,
@@ -192,6 +207,7 @@ struct Meeting: Codable, Identifiable, Hashable {
 
     // MARK: - Day Display
 
+    // The meeting's day as a readable name ("Wednesday").
     var dayName: String {
 
         guard let day else {
@@ -204,6 +220,7 @@ struct Meeting: Codable, Identifiable, Hashable {
 
     // MARK: - Time Display
 
+    // The meeting's start time in a readable format ("7:00 PM").
     var displayTime: String {
 
         guard let time,
@@ -218,6 +235,8 @@ struct Meeting: Codable, Identifiable, Hashable {
 
     // MARK: - Time Formatter
 
+    // Converts a 24-hour time from the feed ("19:00") into the user's
+    // short time style. Falls back to the raw string if it can't parse.
     private static func formatTime(
         _ time: String
     ) -> String {
@@ -250,6 +269,8 @@ struct Meeting: Codable, Identifiable, Hashable {
 
 // MARK: - Meeting Day
 
+// The day of the week a meeting recurs on. Raw values match the Meeting
+// Guide JSON spec (0 = Sunday through 6 = Saturday).
 enum MeetingDay:
     Int,
     Codable,

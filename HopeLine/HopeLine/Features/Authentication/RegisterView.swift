@@ -7,11 +7,14 @@
 
 import SwiftUI
 
+// The account creation screen. Validates the form locally before
+// handing the new account to AuthManager.
 struct RegisterView: View {
 
     @EnvironmentObject var auth: AuthManager
     @Environment(\.dismiss) private var dismiss
 
+    // The new account's credentials and form state.
     @State private var email = ""
     @State private var password = ""
     @State private var confirmPassword = ""
@@ -80,6 +83,9 @@ struct RegisterView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
+    // Validates that the passwords match and meet the minimum length,
+    // then creates the account. Shows a success message for a moment
+    // before popping back to the login screen.
     private func createAccount() {
 
         errorMessage = ""

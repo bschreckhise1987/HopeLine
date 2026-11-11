@@ -7,6 +7,9 @@
 
 import SwiftUI
 
+// The main dashboard after sign-in: the daily check-in button, the
+// feature grid (Journal, Prayer, Meetings, Progress), the live Daily
+// Scripture card, and the crisis Help button.
 struct HomeView: View {
 
     // MARK: - State
@@ -37,6 +40,8 @@ struct HomeView: View {
 
                     // MARK: - Daily Check-In
 
+                    // The biggest button on the screen — the daily
+                    // check-in is the heart of the app.
                     VStack(alignment: .leading, spacing: 12) {
                         Text("How are you doing today?")
                             .font(.title2)
@@ -175,6 +180,7 @@ struct HomeView: View {
 
                     // MARK: - Help
 
+                    // Crisis support entry point. Navigation comes later.
                     Button {
                         // Help navigation will go here later
                     } label: {
@@ -226,6 +232,7 @@ struct HomeView: View {
 
 // MARK: - Home Feature Card
 
+// One tile in the 2x2 feature grid: icon, title, and subtitle.
 private struct HomeFeatureCard: View {
 
     let title: String
