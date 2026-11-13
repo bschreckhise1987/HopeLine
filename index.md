@@ -15,6 +15,7 @@ Welcome to the official development blog for **HopeLine**, a mobile application 
 - [November 5, 2026 - From Sample Data to 23,745 Real Meetings](./blog/2026-11-05.md)
 - [November 6, 2026 - Daily Scripture: Encouragement That Meets You Where You Are](./blog/2026-11-06.md)
 - [November 11, 2026 - A Settings Screen That Grows With HopeLine](./blog/2026-11-11.md)
+- [November 13, 2026 - From Draft to Sprint: Planning Week in Review](./blog/2026-11-13.md)
 ---
 
 ## About the Project
