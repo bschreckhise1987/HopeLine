@@ -715,6 +715,19 @@ private struct ThemeScripturesView: View {
     // to the Journal.
     @State private var showReflectionSaved = false
 
+    // The verse references the user has saved,
+    // so each card can show the right bookmark.
+    @State private var savedReferences: Set<String> = []
+
+    // Prevents double taps while a save or
+    // remove is still in flight.
+    @State private var isSavingScripture = false
+
+    // Shown when saving or removing a theme
+    // Scripture fails.
+    @State private var showSaveError = false
+    @State private var saveErrorMessage: String?
+
     // Uses the shared service instance — ScriptureService
     // has a private initializer (singleton pattern).
     private let scriptureService = ScriptureService.shared
@@ -845,11 +858,26 @@ private struct ThemeScripturesView: View {
                                 scripture: scripture,
                                 isSelected:
                                     selectedScripture?
-                                        .id == scripture.id
+                                        .id == scripture.id,
+                                isSaved:
+                                    savedReferences
+                                        .contains(
+                                            scripture
+                                                .verseReference
+                                        )
                             ) {
                                 // Tapping a Scripture selects it as
                                 // the one the user is holding onto.
                                 selectedScripture = scripture
+                            } onSave: {
+
+                                // Tapping the bookmark saves or
+                                // removes the verse.
+                                Task {
+                                    await toggleSave(
+                                        scripture
+                                    )
+                                }
                             }
                         }
 
@@ -931,10 +959,29 @@ private struct ThemeScripturesView: View {
                     "Your reflection was saved to your Journal."
                 )
             }
+
+            .alert(
+                "Couldn't Save Scripture",
+                isPresented: $showSaveError
+            ) {
+
+                Button(
+                    "OK",
+                    role: .cancel
+                ) { }
+            } message: {
+
+                Text(
+                    saveErrorMessage ??
+                        "Something went wrong. Please try again."
+                )
+            }
             .task {
-                // Loads the theme's Scripture pool
-                // when the sheet first appears.
+                // Loads the theme's Scripture pool and
+                // the user's saved verses when the
+                // sheet first appears.
                 await loadScriptures()
+                await loadSavedReferences()
             }
         }
     }
@@ -965,6 +1012,104 @@ private struct ThemeScripturesView: View {
 
         isLoading = false
     }
+
+    // MARK: - Load Saved References
+    // Loads the user's saved verse references so each
+    // card shows the correct bookmark state.
+
+    private func loadSavedReferences() async {
+
+        // Best effort: if the read fails the
+        // bookmarks simply start unfilled.
+        guard
+            let saved =
+                try? await scriptureService
+                    .fetchSavedScriptures()
+        else {
+            return
+        }
+
+        savedReferences =
+            Set(
+                saved.map(
+                    \.verseReference
+                )
+            )
+    }
+
+    // MARK: - Toggle Save
+    // Saves the Scripture if it isn't saved yet,
+    // or removes it if it already is. Mirrors the
+    // daily Scripture's save flow.
+
+    private func toggleSave(
+        _ scripture: ThemeScripture
+    ) async {
+
+        guard
+            !isSavingScripture
+        else {
+            return
+        }
+
+        isSavingScripture = true
+
+        do {
+
+            if savedReferences
+                .contains(
+                    scripture
+                        .verseReference
+                ) {
+
+                try await scriptureService
+                    .removeSavedScripture(
+                        reference: scripture
+                            .verseReference
+                    )
+
+                savedReferences
+                    .remove(
+                        scripture
+                            .verseReference
+                    )
+            }
+
+            else {
+
+                try await scriptureService
+                    .saveScripture(
+                        reference: scripture
+                            .verseReference,
+                        text: scripture
+                            .verseText
+                    )
+
+                savedReferences
+                    .insert(
+                        scripture
+                            .verseReference
+                    )
+            }
+        }
+
+        catch {
+
+            // Saving requires a signed-in account;
+            // other failures show a generic message.
+            if error is AuthError {
+                saveErrorMessage =
+                    "Sign in to save Scriptures to your account."
+            } else {
+                saveErrorMessage =
+                    "HopeLine couldn't save this Scripture. Check your internet connection and try again."
+            }
+
+            showSaveError = true
+        }
+
+        isSavingScripture = false
+    }
 }
 
 // MARK: - Theme Scripture Card
@@ -977,8 +1122,16 @@ private struct ThemeScriptureCard: View {
     // Whether this is the verse the user tapped.
     let isSelected: Bool
 
+    // Whether this verse is saved to the
+    // user's Saved Scriptures.
+    let isSaved: Bool
+
     // Called when the card is tapped.
     let onTap: () -> Void
+
+    // Called when the bookmark is tapped to
+    // save or remove the verse.
+    let onSave: () -> Void
 
     var body: some View {
 
@@ -1003,16 +1156,28 @@ private struct ThemeScriptureCard: View {
 
                     Spacer()
 
-                    // Filled bookmark shown on the
-                    // selected Scripture.
-                    if isSelected {
+                    // Tapping the bookmark saves this
+                    // Scripture or removes it. Filled
+                    // when saved, outline when not.
+                    Button {
+                        onSave()
+                    } label: {
 
                         Image(
                             systemName:
-                                "bookmark.fill"
+                                isSaved
+                                ? "bookmark.fill"
+                                : "bookmark"
                         )
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(
+                            isSaved
+                                ? .blue
+                                : .secondary
+                        )
                     }
+                    .buttonStyle(
+                        .plain
+                    )
                 }
 
                 // MARK: Verse Text

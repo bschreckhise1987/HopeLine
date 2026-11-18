@@ -1153,7 +1153,7 @@ private struct ScriptureSettingsView:
 
                 NavigationLink {
 
-                    SavedScripturesPlaceholderView()
+                    SavedScripturesListView()
 
                 } label: {
 
@@ -1287,29 +1287,411 @@ private struct MyDataView: View {
 }
 
 
-// MARK: - Saved Scriptures Placeholder
+// MARK: - Saved Scriptures List
 
-// Temporary screen for the saved Scripture collection until it lists
-// the user's real saved verses.
-private struct SavedScripturesPlaceholderView:
+// The user's saved Scripture collection, loaded live from the
+// saved_scriptures table. Each verse can be reflected on in the
+// Journal or removed from the collection.
+private struct SavedScripturesListView:
     View {
+
+    // MARK: - State
+
+    // The user's saved verses, newest first.
+    @State private var scriptures: [SavedScripture] = []
+
+    @State private var isLoading = true
+
+    @State private var errorMessage: String?
+
+    // The verse being reflected on, while the
+    // Journal sheet is open.
+    @State private var scriptureToReflect: SavedScripture?
+
+    // Shown when removing a verse fails.
+    @State private var showingRemoveError = false
+
+    @State private var removeErrorMessage: String?
+
+    // MARK: - Services
+
+    // Uses the shared service instance — ScriptureService
+    // has a private initializer (singleton pattern).
+    private let scriptureService = ScriptureService.shared
+
+    // MARK: - Body
 
     var body: some View {
 
-        ContentUnavailableView(
-            "Saved Scriptures",
-            systemImage:
-                "bookmark.fill",
-            description:
-                Text(
-                    "Your saved Scripture collection will appear here."
-                )
-        )
+        Group {
+
+            if isLoading {
+
+                loadingView
+
+            } else if let errorMessage {
+
+                errorView(message: errorMessage)
+
+            } else if scriptures.isEmpty {
+
+                emptyView
+
+            } else {
+
+                scripturesList
+            }
+        }
         .navigationTitle(
             "Saved Scriptures"
         )
+        .navigationBarTitleDisplayMode(
+            .inline
+        )
+        .task {
+            await loadScriptures()
+        }
+        .refreshable {
+            await loadScriptures()
+        }
+        .sheet(
+            item: $scriptureToReflect
+        ) { scripture in
+
+            ScriptureReflectionView(
+                verseReference:
+                    scripture.verseReference,
+                verseText:
+                    scripture.verseText
+            )
+        }
+        .alert(
+            "Unable to Remove Scripture",
+            isPresented: $showingRemoveError
+        ) {
+
+            Button(
+                "OK",
+                role: .cancel
+            ) { }
+
+        } message: {
+
+            Text(
+                removeErrorMessage ??
+                    "Something went wrong while removing the Scripture."
+            )
+        }
+    }
+
+    // MARK: - Load Scriptures
+
+    // Fetches the user's saved verses. RLS on the table
+    // guarantees only the signed-in user's verses return.
+    @MainActor
+    private func loadScriptures() async {
+
+        isLoading = true
+        errorMessage = nil
+
+        do {
+
+            scriptures =
+                try await scriptureService
+                    .fetchSavedScriptures()
+
+        } catch {
+
+            errorMessage =
+                error.localizedDescription
+        }
+
+        isLoading = false
+    }
+
+    // MARK: - Remove Scripture
+
+    // Removes one verse from the collection, then updates
+    // the list immediately.
+    @MainActor
+    private func removeScripture(
+        _ scripture: SavedScripture
+    ) async {
+
+        do {
+
+            try await scriptureService
+                .removeSavedScripture(
+                    reference:
+                        scripture.verseReference
+                )
+
+            scriptures.removeAll {
+                $0.id == scripture.id
+            }
+
+        } catch {
+
+            removeErrorMessage =
+                error.localizedDescription
+
+            showingRemoveError = true
+        }
+    }
+
+    // MARK: - List
+
+    // The saved verses as cards, newest first, with
+    // swipe-to-delete support.
+    private var scripturesList: some View {
+
+        List {
+
+            ForEach(scriptures) { scripture in
+
+                SavedScriptureCard(
+                    scripture: scripture,
+                    onReflect: {
+
+                        scriptureToReflect = scripture
+
+                    },
+                    onRemove: {
+
+                        Task {
+                            await removeScripture(
+                                scripture
+                            )
+                        }
+                    }
+                )
+                .listRowInsets(
+                    EdgeInsets(
+                        top: 6,
+                        leading: 16,
+                        bottom: 6,
+                        trailing: 16
+                    )
+                )
+                .listRowSeparator(
+                    .hidden
+                )
+                .listRowBackground(
+                    Color.clear
+                )
+            }
+            .onDelete { offsets in
+
+                // Capture the verses before any removal
+                // changes the array the offsets point into.
+                let removed =
+                    offsets.map {
+                        scriptures[$0]
+                    }
+
+                Task {
+                    for scripture in removed {
+                        await removeScripture(
+                            scripture
+                        )
+                    }
+                }
+            }
+        }
+        .listStyle(
+            .plain
+        )
+        .scrollContentBackground(
+            .hidden
+        )
+    }
+
+    // MARK: - Loading View
+
+    // Shown while the saved verses load.
+    private var loadingView: some View {
+
+        HStack(spacing: 12) {
+
+            ProgressView()
+
+            Text("Loading your saved Scriptures...")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 36)
+    }
+
+    // MARK: - Error View
+
+    // Shown when the collection can't be loaded,
+    // with a retry button.
+    private func errorView(
+        message: String
+    ) -> some View {
+
+        VStack(spacing: 14) {
+
+            Image(
+                systemName:
+                    "exclamationmark.triangle.fill"
+            )
+            .font(.title2)
+            .foregroundStyle(.orange)
+
+            Text("Unable to Load Saved Scriptures")
+                .font(.headline)
+
+            Text(message)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+
+            Button("Try Again") {
+
+                Task {
+                    await loadScriptures()
+                }
+            }
+            .buttonStyle(.bordered)
+        }
+        .frame(maxWidth: .infinity)
+        .padding()
+        .background(
+            Color(.secondarySystemBackground)
+        )
+        .clipShape(
+            RoundedRectangle(cornerRadius: 16)
+        )
+    }
+
+    // MARK: - Empty View
+
+    // Friendly empty state for users who haven't
+    // saved any verses yet.
+    private var emptyView: some View {
+
+        VStack(spacing: 14) {
+
+            Text("🔖")
+                .font(.system(size: 44))
+
+            Text("No Saved Scriptures Yet")
+                .font(.headline)
+
+            Text(
+                "Save a Scripture from the Daily Scripture screen and it will appear here."
+            )
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 36)
+        .padding(.horizontal)
+        .background(
+            Color(.secondarySystemBackground)
+        )
+        .clipShape(
+            RoundedRectangle(cornerRadius: 16)
+        )
     }
 }
+
+
+// MARK: - Saved Scripture Card
+
+// One saved verse: the text, its reference, the date it was
+// saved, and Reflect / Unsave actions.
+private struct SavedScriptureCard: View {
+
+    let scripture: SavedScripture
+
+    let onReflect: () -> Void
+
+    let onRemove: () -> Void
+
+    var body: some View {
+
+        VStack(alignment: .leading, spacing: 12) {
+
+            // MARK: Verse
+
+            Text(scripture.verseText)
+                .font(.body)
+                .foregroundStyle(.primary)
+                .frame(
+                    maxWidth: .infinity,
+                    alignment: .leading
+                )
+
+            // MARK: Reference
+
+            Text(scripture.verseReference)
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(.blue)
+
+            // MARK: Date Saved
+
+            if let savedDate =
+                scripture.createdAt {
+
+                Label(
+                    savedDate.formatted(
+                        date: .abbreviated,
+                        time: .omitted
+                    ),
+                    systemImage: "bookmark.fill"
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+
+            Divider()
+
+            // MARK: Actions
+
+            HStack {
+
+                Button {
+                    onReflect()
+                } label: {
+                    Label(
+                        "Reflect",
+                        systemImage:
+                            "square.and.pencil"
+                    )
+                }
+                .buttonStyle(.bordered)
+
+                Spacer()
+
+                Button(
+                    role: .destructive
+                ) {
+                    onRemove()
+                } label: {
+                    Label(
+                        "Unsave",
+                        systemImage:
+                            "bookmark.slash"
+                    )
+                }
+                .buttonStyle(.bordered)
+            }
+        }
+        .padding()
+        .background(
+            Color(.secondarySystemBackground)
+        )
+        .clipShape(
+            RoundedRectangle(cornerRadius: 16)
+        )
+    }
+}
+
 
 
 // MARK: - About HopeLine
