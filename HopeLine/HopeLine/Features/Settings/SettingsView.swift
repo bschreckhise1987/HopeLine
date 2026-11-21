@@ -1977,29 +1977,23 @@ private struct SavedScriptureCard: View {
 
 
 // MARK: - About HopeLine
-
-// App information: purpose, project background, and acknowledgments.
-private struct AboutHopeLineView:
-    View {
-
+// The story, purpose, and mission behind HopeLine.
+private struct AboutHopeLineView: View {
     var body: some View {
-
         ScrollView {
-
             VStack(
                 alignment: .leading,
-                spacing: 20
+                spacing: 24
             ) {
 
+                // MARK: - Header
                 VStack(
                     alignment: .leading,
                     spacing: 8
                 ) {
-
                     Text("HopeLine")
                         .font(.largeTitle)
                         .fontWeight(.bold)
-
 
                     Text(
                         "Support When It Matters Most"
@@ -2008,7 +2002,7 @@ private struct AboutHopeLineView:
                     .foregroundStyle(.blue)
                 }
 
-
+                // MARK: - Introduction
                 Text(
                     """
                     HopeLine is a recovery-support application designed to provide practical tools, reflection, encouragement, Scripture, prayer, and connection when support matters most.
@@ -2017,31 +2011,102 @@ private struct AboutHopeLineView:
                 .font(.body)
                 .lineSpacing(4)
 
+                Divider()
+
+                // MARK: - About the Project
+                aboutSection(
+                    title: "About the Project",
+                    text:
+                        """
+                        HopeLine began as a Full Sail University software development capstone project, but it has grown into something much more personal.
+
+                        The idea behind HopeLine comes from a simple belief: no one should have to face their hardest moments alone.
+
+                        Recovery is more than counting days. It can mean rebuilding relationships, learning to face difficult emotions, finding purpose again, strengthening faith, and choosing to keep moving forward even when life gets heavy.
+
+                        HopeLine was created to bring some of that support together in one place.
+
+                        Through mood check-ins, journaling, recovery tools, prayer, Scripture, meetings, and other forms of encouragement, HopeLine is designed to give people a place to pause, reflect, and reach for hope when they need it.
+                        """
+                )
 
                 Divider()
 
+                // MARK: - Why HopeLine Exists
+                aboutSection(
+                    title: "Why HopeLine Exists",
+                    text:
+                        """
+                        HopeLine was shaped by lived experience with recovery and the understanding that sometimes the moments that matter most happen when no one else is around.
 
+                        Sometimes you need to write something down.
+
+                        Sometimes you need Scripture.
+
+                        Sometimes you need prayer.
+
+                        Sometimes you need to recognize how far you've come.
+
+                        And sometimes you simply need a reminder that you are not alone and your story is not over.
+
+                        HopeLine exists for those moments.
+                        """
+                )
+
+                Divider()
+
+                // MARK: - The Mission
+                VStack(
+                    alignment: .leading,
+                    spacing: 12
+                ) {
+                    Text("The Mission")
+                        .font(.headline)
+
+                    Text(
+                        "Support recovery. Encourage reflection. Strengthen faith. Create connection. Keep hope within reach."
+                    )
+                    .font(.body)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.blue)
+                    .lineSpacing(4)
+
+                    Text(
+                        """
+                        HopeLine is not meant to replace professional treatment, counseling, recovery programs, sponsors, mentors, churches, or supportive communities. It is designed to stand alongside them as another source of encouragement and reflection.
+
+                        Because sometimes getting through a difficult moment starts with having one more reason to keep going.
+                        """
+                    )
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineSpacing(4)
+                }
+
+                Divider()
+
+                // MARK: - Closing
                 VStack(
                     alignment: .leading,
                     spacing: 8
                 ) {
-
-                    Text(
-                        "About the Project"
+                    Image(
+                        systemName: "heart.fill"
                     )
-                    .font(.headline)
+                    .font(.title2)
+                    .foregroundStyle(.blue)
 
+                    Text("There is always hope.")
+                        .font(.title3)
+                        .fontWeight(.bold)
 
                     Text(
-                        """
-                        HopeLine was created as a Full Sail University software development capstone project.
-                        """
+                        "Support when it matters most."
                     )
                     .font(.subheadline)
-                    .foregroundStyle(
-                        .secondary
-                    )
+                    .foregroundStyle(.secondary)
                 }
+                .padding(.bottom, 12)
             }
             .padding()
         }
@@ -2052,9 +2117,27 @@ private struct AboutHopeLineView:
             .inline
         )
     }
+
+    // MARK: - About Section
+    // Reusable text section for the About screen.
+    private func aboutSection(
+        title: String,
+        text: String
+    ) -> some View {
+        VStack(
+            alignment: .leading,
+            spacing: 10
+        ) {
+            Text(title)
+                .font(.headline)
+
+            Text(text)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .lineSpacing(4)
+        }
+    }
 }
-
-
 // MARK: - Preview
 
 #Preview {
