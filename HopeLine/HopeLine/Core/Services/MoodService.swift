@@ -97,6 +97,32 @@ final class MoodService {
             .execute()
     }
 
+    // MARK: - Fetch Check-In Count
+    // Counts the signed-in user's check-ins for the My Data
+    // screen. Asks the database for a count instead of
+    // downloading every row.
+    func fetchCheckInCount() async throws -> Int {
+
+        let userId =
+            try await supabase.auth.user().id
+
+        let response =
+            try await supabase
+            .from("mood_checkins")
+            .select(
+                "id",
+                head: true,
+                count: .exact
+            )
+            .eq(
+                "user_id",
+                value: userId
+            )
+            .execute()
+
+        return response.count ?? 0
+    }
+
     // MARK: - Helpers
 
     // Trims whitespace from optional notes and returns nil if nothing

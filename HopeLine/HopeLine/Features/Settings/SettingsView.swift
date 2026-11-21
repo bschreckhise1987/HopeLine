@@ -388,10 +388,9 @@ struct SettingsView: View {
                     SettingsDivider()
 
 
-                    Button {
+                    NavigationLink {
 
-                        // Privacy Policy
-                        // connection comes later.
+                        PrivacyPolicyView()
 
                     } label: {
 
@@ -411,10 +410,9 @@ struct SettingsView: View {
                     SettingsDivider()
 
 
-                    Button {
+                    NavigationLink {
 
-                        // Terms & Resources
-                        // connection comes later.
+                        TermsResourcesView()
 
                     } label: {
 
@@ -1245,43 +1243,327 @@ private struct PrivacySettingsView:
 
 // MARK: - My Data
 
-// Lists the kinds of personal data HopeLine stores. Will eventually show
-// real counts and export/delete options for each category.
+// Shows live counts of the personal data HopeLine stores for the
+// signed-in user, pulled from each feature's service.
 private struct MyDataView: View {
+
+    // MARK: - State
+
+    // Live counts for each category. nil means the count is
+    // still loading (or failed), and the row shows a dash.
+    @State private var journalCount: Int?
+    @State private var savedScriptureCount: Int?
+    @State private var checkInCount: Int?
+    @State private var prayerCount: Int?
+
+    // MARK: - Services
+
+    // Most services are singletons with private initializers.
+    // MoodService is a plain service class, so it is created
+    // directly, the same way the check-in screen does.
+    private let journalService = JournalService.shared
+    private let scriptureService = ScriptureService.shared
+    private let prayerService = PrayerService.shared
+    private let moodService = MoodService()
 
     var body: some View {
 
         List {
 
-            Label(
-                "Journal Entries",
-                systemImage:
-                    "book.closed.fill"
+            MyDataRow(
+                icon: "book.closed.fill",
+                iconColor: .blue,
+                title: "Journal Entries",
+                count: journalCount
             )
 
-
-            Label(
-                "Saved Scriptures",
-                systemImage:
-                    "bookmark.fill"
+            MyDataRow(
+                icon: "bookmark.fill",
+                iconColor: .orange,
+                title: "Saved Scriptures",
+                count: savedScriptureCount
             )
 
-
-            Label(
-                "Daily Check-Ins",
-                systemImage:
-                    "heart.text.square.fill"
+            MyDataRow(
+                icon: "heart.text.square.fill",
+                iconColor: .pink,
+                title: "Daily Check-Ins",
+                count: checkInCount
             )
 
-
-            Label(
-                "Prayer Activity",
-                systemImage:
-                    "hands.sparkles.fill"
+            MyDataRow(
+                icon: "hands.sparkles.fill",
+                iconColor: .green,
+                title: "Prayers Shared",
+                count: prayerCount
             )
         }
         .navigationTitle(
             "My Data"
+        )
+        .task {
+            await loadCounts()
+        }
+    }
+
+    // MARK: - Load Counts
+
+    // Loads each category independently so one failure never
+    // hides the others. A count that fails to load simply
+    // keeps its dash.
+
+    private func loadCounts() async {
+
+        journalCount =
+            try? await journalService
+                .fetchEntries()
+                .count
+
+        savedScriptureCount =
+            try? await scriptureService
+                .fetchSavedScriptures()
+                .count
+
+        checkInCount =
+            try? await moodService
+                .fetchCheckInCount()
+
+        prayerCount =
+            try? await prayerService
+                .fetchMyPrayers()
+                .count
+    }
+}
+
+
+// MARK: - My Data Row
+
+// One count row in the My Data list: icon, title, and the
+// live count (or a dash while loading).
+private struct MyDataRow: View {
+
+    let icon: String
+    let iconColor: Color
+    let title: String
+    let count: Int?
+
+    var body: some View {
+
+        HStack {
+
+            Image(
+                systemName: icon
+            )
+            .foregroundStyle(iconColor)
+            .frame(width: 28)
+
+            Text(title)
+
+            Spacer()
+
+            Text(
+                count.map(String.init) ?? "—"
+            )
+            .foregroundStyle(.secondary)
+            .monospacedDigit()
+        }
+    }
+}
+
+
+// MARK: - Privacy Policy
+
+// A plain-language summary of what HopeLine collects and how it
+// is protected. Will grow into a full policy before release.
+private struct PrivacyPolicyView: View {
+
+    var body: some View {
+
+        ScrollView {
+
+            VStack(alignment: .leading, spacing: 16) {
+
+                policySection(
+                    icon: "person.crop.circle.fill",
+                    title: "What HopeLine Collects",
+                    text: "HopeLine stores your account email, journal entries, daily check-ins, prayer requests, and saved Scriptures. Everything is tied to your account and stays private to you."
+                )
+
+                policySection(
+                    icon: "location.fill",
+                    title: "About Your Location",
+                    text: "Your location is used only to find recovery meetings near you. It is never stored on HopeLine's servers."
+                )
+
+                policySection(
+                    icon: "lock.shield.fill",
+                    title: "How Your Data Is Protected",
+                    text: "Your data lives in a secure database where each account can only read and write its own information. This rule is enforced by the database itself, not just the app, and data is encrypted in transit."
+                )
+
+                policySection(
+                    icon: "hand.raised.fill",
+                    title: "What HopeLine Never Does",
+                    text: "HopeLine does not sell your data, share it with advertisers, or send your journal entries or personal information to outside companies."
+                )
+            }
+            .padding()
+        }
+        .navigationTitle(
+            "Privacy Policy"
+        )
+        .navigationBarTitleDisplayMode(
+            .inline
+        )
+    }
+
+    // MARK: - Policy Section
+
+    // One titled card in the policy.
+    private func policySection(
+        icon: String,
+        title: String,
+        text: String
+    ) -> some View {
+
+        VStack(alignment: .leading, spacing: 10) {
+
+            Label(
+                title,
+                systemImage: icon
+            )
+            .font(.headline)
+
+            Text(text)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .frame(
+            maxWidth: .infinity,
+            alignment: .leading
+        )
+        .padding()
+        .background(
+            Color(.secondarySystemBackground)
+        )
+        .clipShape(
+            RoundedRectangle(cornerRadius: 16)
+        )
+    }
+}
+
+
+// MARK: - Terms & Resources
+
+// Basic terms of use plus quick recovery resources.
+private struct TermsResourcesView: View {
+
+    var body: some View {
+
+        ScrollView {
+
+            VStack(alignment: .leading, spacing: 16) {
+
+                termsSection(
+                    icon: "doc.text.fill",
+                    title: "Using HopeLine",
+                    text: "HopeLine is a recovery support tool offered as-is for personal use. It does not provide medical, clinical, or professional advice."
+                )
+
+                termsSection(
+                    icon: "exclamationmark.triangle.fill",
+                    title: "Meeting Information",
+                    text: "Meeting details come from public meeting-guide data and can change. Please confirm times and locations with the local meeting before attending."
+                )
+
+                termsSection(
+                    icon: "heart.fill",
+                    title: "In a Crisis?",
+                    text: "HopeLine is not a crisis service. If you or someone you know is in crisis, call or text 988 (Suicide & Crisis Lifeline) right away."
+                )
+
+                // MARK: Quick Resources
+
+                VStack(alignment: .leading, spacing: 12) {
+
+                    Label(
+                        "Quick Resources",
+                        systemImage:
+                            "lifepreserver.fill"
+                    )
+                    .font(.headline)
+
+                    Text(
+                        "988 Suicide & Crisis Lifeline — call or text 988"
+                    )
+                    .font(.subheadline)
+
+                    Text(
+                        "SAMHSA National Helpline — 1-800-662-4357"
+                    )
+                    .font(.subheadline)
+
+                    Link(
+                        "Narcotics Anonymous — na.org",
+                        destination: URL(
+                            string: "https://www.na.org"
+                        )!
+                    )
+                    .font(.subheadline)
+                }
+                .frame(
+                    maxWidth: .infinity,
+                    alignment: .leading
+                )
+                .padding()
+                .background(
+                    Color(.secondarySystemBackground)
+                )
+                .clipShape(
+                    RoundedRectangle(cornerRadius: 16)
+                )
+            }
+            .padding()
+        }
+        .navigationTitle(
+            "Terms & Resources"
+        )
+        .navigationBarTitleDisplayMode(
+            .inline
+        )
+    }
+
+    // MARK: - Terms Section
+
+    // One titled card in the terms.
+    private func termsSection(
+        icon: String,
+        title: String,
+        text: String
+    ) -> some View {
+
+        VStack(alignment: .leading, spacing: 10) {
+
+            Label(
+                title,
+                systemImage: icon
+            )
+            .font(.headline)
+
+            Text(text)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .frame(
+            maxWidth: .infinity,
+            alignment: .leading
+        )
+        .padding()
+        .background(
+            Color(.secondarySystemBackground)
+        )
+        .clipShape(
+            RoundedRectangle(cornerRadius: 16)
         )
     }
 }

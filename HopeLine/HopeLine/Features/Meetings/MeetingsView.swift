@@ -280,14 +280,24 @@ struct MeetingsView: View {
 
                         ForEach(filteredMeetings) { meeting in
 
-                            MeetingCard(
-                                meeting: meeting
-                            ) { selected in
+                            NavigationLink {
 
-                                openDirections(
-                                    to: selected
+                                MeetingDetailView(
+                                    meeting: meeting
                                 )
+
+                            } label: {
+
+                                MeetingCard(
+                                    meeting: meeting
+                                ) { selected in
+
+                                    openDirections(
+                                        to: selected
+                                    )
+                                }
                             }
+                            .buttonStyle(.plain)
                         }
                     }
                 }
@@ -585,7 +595,7 @@ private struct MeetingCard: View {
 // MARK: - Meeting Type Badge
 
 // The small colored capsule showing "In Person" or "Online".
-private struct MeetingTypeBadge: View {
+struct MeetingTypeBadge: View {
 
     let type: MeetingType
 
@@ -612,7 +622,7 @@ private struct MeetingTypeBadge: View {
 // MARK: - Meeting Type
 
 // Display info (title, icon, color) for the two kinds of meetings.
-private enum MeetingType {
+enum MeetingType {
 
     case inPerson
     case online
