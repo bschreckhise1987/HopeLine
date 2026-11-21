@@ -16,6 +16,7 @@ Welcome to the official development blog for **HopeLine**, a mobile application 
 - [November 6, 2026 - Daily Scripture: Encouragement That Meets You Where You Are](./blog/2026-11-06.md)
 - [November 11, 2026 - A Settings Screen That Grows With HopeLine](./blog/2026-11-11.md)
 - [November 13, 2026 - From Draft to Sprint: Planning Week in Review](./blog/2026-11-13.md)
+- [November 20, 2026 - Sprint Complete: Four Features and a Mystery](./blog/2026-11-20.md)
 ---
 
 ## About the Project
