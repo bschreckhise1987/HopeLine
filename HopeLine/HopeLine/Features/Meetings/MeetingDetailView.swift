@@ -161,7 +161,7 @@ struct MeetingDetailView: View {
                         // Taps the heart to favorite this
                         // meeting or remove it. Filled when
                         // favorited, outline when not.
-                        if meeting.meetingGuideId != nil {
+                        if meeting.meetingGuideID != nil {
 
                             Button {
                                 Task {
@@ -378,7 +378,7 @@ struct MeetingDetailView: View {
 
         isFavorite =
             favorites.contains(
-                meeting.meetingGuideId ?? ""
+                meeting.meetingGuideID ?? ""
             )
     }
 
@@ -390,7 +390,7 @@ struct MeetingDetailView: View {
 
         guard
             let guideId =
-                meeting.meetingGuideId,
+                meeting.meetingGuideID,
             !isTogglingFavorite
         else {
             return

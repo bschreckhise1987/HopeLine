@@ -298,7 +298,7 @@ struct MeetingsView: View {
                                         favoriteGuideIds
                                             .contains(
                                                 meeting
-                                                    .meetingGuideId ?? ""
+                                                    .meetingGuideID ?? ""
                                             )
                                 ) { selected in
 
@@ -499,7 +499,7 @@ struct MeetingsView: View {
                     favoriteGuideIds
                         .contains(
                             meeting
-                                .meetingGuideId ?? ""
+                                .meetingGuideID ?? ""
                         )
             }
 
