@@ -118,6 +118,27 @@ struct JournalView: View {
         }
         .navigationTitle("Journal")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+
+            ToolbarItem(
+                placement: .topBarTrailing
+            ) {
+
+                NavigationLink {
+
+                    CrisisView()
+
+                } label: {
+
+                    Image(
+                        systemName:
+                            "lifepreserver.fill"
+                    )
+                    .foregroundStyle(.red)
+                }
+            }
+        }
+
         .task {
             await loadEntries()
         }

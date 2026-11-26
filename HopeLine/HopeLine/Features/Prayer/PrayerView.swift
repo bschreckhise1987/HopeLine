@@ -140,6 +140,27 @@ struct PrayerView: View {
         }
         .navigationTitle("Prayer")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+
+            ToolbarItem(
+                placement: .topBarTrailing
+            ) {
+
+                NavigationLink {
+
+                    CrisisView()
+
+                } label: {
+
+                    Image(
+                        systemName:
+                            "lifepreserver.fill"
+                    )
+                    .foregroundStyle(.red)
+                }
+            }
+        }
+
         .task {
             await loadPrayers()
         }

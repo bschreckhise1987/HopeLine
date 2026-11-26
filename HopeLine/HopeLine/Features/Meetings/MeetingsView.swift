@@ -26,6 +26,10 @@ struct MeetingsView: View {
     // The real meetings loaded from the nearby_meetings database
     // function, closest first.
     @State private var nearbyMeetings: [NearbyMeeting] = []
+
+    // The meeting guide IDs the signed-in user has favorited,
+    // so the list can show hearts and honor the Favorites filter.
+    @State private var favoriteGuideIds: Set<String> = []
     @State private var isLoadingMeetings = false
     @State private var meetingsErrorMessage: String?
 
@@ -289,7 +293,13 @@ struct MeetingsView: View {
                             } label: {
 
                                 MeetingCard(
-                                    meeting: meeting
+                                    meeting: meeting,
+                                    isFavorite:
+                                        favoriteGuideIds
+                                            .contains(
+                                                meeting
+                                                    .meetingGuideId ?? ""
+                                            )
                                 ) { selected in
 
                                     openDirections(
@@ -335,8 +345,30 @@ struct MeetingsView: View {
         }
         .navigationTitle("Meetings")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+
+            ToolbarItem(
+                placement: .topBarTrailing
+            ) {
+
+                NavigationLink {
+
+                    CrisisView()
+
+                } label: {
+
+                    Image(
+                        systemName:
+                            "lifepreserver.fill"
+                    )
+                    .foregroundStyle(.red)
+                }
+            }
+        }
+
         .task {
             locationService.requestLocation()
+            await loadFavorites()
         }
         // Whenever a location arrives, center the map on it and load
         // the meetings around it.
@@ -413,6 +445,24 @@ struct MeetingsView: View {
         openURL(url)
     }
 
+    // MARK: - Load Favorites
+
+    // Best effort: if the read fails the hearts and the
+    // Favorites filter simply start empty.
+    private func loadFavorites() async {
+
+        guard
+            let favorites =
+                try? await MeetingFavoriteService
+                    .shared
+                    .fetchFavoriteGuideIds()
+        else {
+            return
+        }
+
+        favoriteGuideIds = favorites
+    }
+
     // MARK: - Displayed Meetings
 
     // Everything within the map area — used for map pins
@@ -443,6 +493,14 @@ struct MeetingsView: View {
             case .online:
                 matchesType =
                     meeting.isOnline
+
+            case .favorites:
+                matchesType =
+                    favoriteGuideIds
+                        .contains(
+                            meeting
+                                .meetingGuideId ?? ""
+                        )
             }
 
             let trimmedSearch =
@@ -472,6 +530,9 @@ struct MeetingsView: View {
 private struct MeetingCard: View {
 
     let meeting: NearbyMeeting
+
+    // Whether this meeting is in the user's favorites.
+    let isFavorite: Bool
 
     let onDirections: (NearbyMeeting) -> Void
 
@@ -505,6 +566,16 @@ private struct MeetingCard: View {
                 }
 
                 Spacer()
+
+                if isFavorite {
+
+                    Image(
+                        systemName:
+                            "heart.fill"
+                    )
+                    .font(.subheadline)
+                    .foregroundStyle(.red)
+                }
 
                 if let distance =
                     meeting.formattedDistance {
@@ -675,6 +746,7 @@ private enum MeetingFilter:
     case all
     case inPerson
     case online
+    case favorites
 
     var id: String {
         rawValue
@@ -692,6 +764,9 @@ private enum MeetingFilter:
 
         case .online:
             return "Online"
+
+        case .favorites:
+            return "Favorites"
         }
     }
 }

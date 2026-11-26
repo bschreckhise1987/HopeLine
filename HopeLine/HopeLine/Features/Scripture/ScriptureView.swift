@@ -432,6 +432,27 @@ struct ScriptureView: View {
         }
         .navigationTitle("Scripture")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+
+            ToolbarItem(
+                placement: .topBarTrailing
+            ) {
+
+                NavigationLink {
+
+                    CrisisView()
+
+                } label: {
+
+                    Image(
+                        systemName:
+                            "lifepreserver.fill"
+                    )
+                    .foregroundStyle(.red)
+                }
+            }
+        }
+
         .task {
             // Loads today's Scripture when
             // the screen first appears.

@@ -180,9 +180,11 @@ struct HomeView: View {
 
                     // MARK: - Help
 
-                    // Crisis support entry point. Navigation comes later.
-                    Button {
-                        // Help navigation will go here later
+                    // Opens the crisis support screen.
+                    NavigationLink {
+
+                        CrisisView()
+
                     } label: {
                         Label(
                             "I Need Help",
@@ -190,7 +192,8 @@ struct HomeView: View {
                         )
                         .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.borderedProminent)
+                    .tint(.red)
                     .controlSize(.large)
                 }
                 .padding()

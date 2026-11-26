@@ -7,6 +7,7 @@
 
 import SwiftUI
 import MapKit
+import Supabase
 
 // The full detail screen for one meeting. Shows every piece of
 // data the database holds for the meeting, plus a map pin and
@@ -16,6 +17,24 @@ struct MeetingDetailView: View {
     let meeting: NearbyMeeting
 
     @Environment(\.openURL) private var openURL
+
+    // MARK: - Favorite State
+
+    // Whether this meeting is in the user's favorites.
+    @State private var isFavorite = false
+
+    // Prevents double taps while a favorite change
+    // is still in flight.
+    @State private var isTogglingFavorite = false
+
+    // Shown when favoriting or unfavoriting fails.
+    @State private var showFavoriteError = false
+    @State private var favoriteErrorMessage: String?
+
+    // Uses the shared service instance —
+    // MeetingFavoriteService has a private
+    // initializer (singleton pattern).
+    private let favoriteService = MeetingFavoriteService.shared
 
     // MARK: - Display Helpers
 
@@ -135,6 +154,40 @@ struct MeetingDetailView: View {
                                 .font(.subheadline)
                                 .fontWeight(.semibold)
                                 .foregroundStyle(.blue)
+                        }
+
+                        Spacer()
+
+                        // Taps the heart to favorite this
+                        // meeting or remove it. Filled when
+                        // favorited, outline when not.
+                        if meeting.meetingGuideId != nil {
+
+                            Button {
+                                Task {
+                                    await toggleFavorite()
+                                }
+                            } label: {
+
+                                Image(
+                                    systemName:
+                                        isFavorite
+                                        ? "heart.fill"
+                                        : "heart"
+                                )
+                                .font(.title3)
+                                .foregroundStyle(
+                                    isFavorite
+                                        ? .red
+                                        : .secondary
+                                )
+                            }
+                            .buttonStyle(
+                                .plain
+                            )
+                            .disabled(
+                                isTogglingFavorite
+                            )
                         }
                     }
                 }
@@ -288,6 +341,102 @@ struct MeetingDetailView: View {
         .navigationBarTitleDisplayMode(
             .inline
         )
+        .task {
+            await loadFavoriteState()
+        }
+        .alert(
+            "Couldn't Save Favorite",
+            isPresented: $showFavoriteError
+        ) {
+
+            Button(
+                "OK",
+                role: .cancel
+            ) { }
+        } message: {
+
+            Text(
+                favoriteErrorMessage ??
+                    "Something went wrong. Please try again."
+            )
+        }
+    }
+
+    // MARK: - Load Favorite State
+
+    // Best effort: if the read fails, the heart simply
+    // starts unfilled.
+    private func loadFavoriteState() async {
+
+        guard
+            let favorites =
+                try? await favoriteService
+                    .fetchFavoriteGuideIds()
+        else {
+            return
+        }
+
+        isFavorite =
+            favorites.contains(
+                meeting.meetingGuideId ?? ""
+            )
+    }
+
+    // MARK: - Toggle Favorite
+
+    // Favorites this meeting if it isn't favorited yet,
+    // or removes it if it already is.
+    private func toggleFavorite() async {
+
+        guard
+            let guideId =
+                meeting.meetingGuideId,
+            !isTogglingFavorite
+        else {
+            return
+        }
+
+        isTogglingFavorite = true
+
+        do {
+
+            if isFavorite {
+
+                try await favoriteService
+                    .unfavoriteMeeting(
+                        guideId: guideId
+                    )
+
+                isFavorite = false
+            }
+
+            else {
+
+                try await favoriteService
+                    .favoriteMeeting(
+                        guideId: guideId
+                    )
+
+                isFavorite = true
+            }
+        }
+
+        catch {
+
+            // Favoriting requires a signed-in account;
+            // other failures show a generic message.
+            if error is AuthError {
+                favoriteErrorMessage =
+                    "Sign in to save favorite meetings to your account."
+            } else {
+                favoriteErrorMessage =
+                    "HopeLine couldn't save this favorite. Check your internet connection and try again."
+            }
+
+            showFavoriteError = true
+        }
+
+        isTogglingFavorite = false
     }
 
     // MARK: - Directions

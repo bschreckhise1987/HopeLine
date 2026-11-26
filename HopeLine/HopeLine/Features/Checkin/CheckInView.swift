@@ -115,6 +115,27 @@ struct CheckInView: View {
         }
         .navigationTitle("Daily Check-In")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+
+            ToolbarItem(
+                placement: .topBarTrailing
+            ) {
+
+                NavigationLink {
+
+                    CrisisView()
+
+                } label: {
+
+                    Image(
+                        systemName:
+                            "lifepreserver.fill"
+                    )
+                    .foregroundStyle(.red)
+                }
+            }
+        }
+
         .task {
             await loadMoods()
         }
