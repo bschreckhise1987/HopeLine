@@ -17,6 +17,7 @@ Welcome to the official development blog for **HopeLine**, a mobile application 
 - [November 11, 2026 - A Settings Screen That Grows With HopeLine](./blog/2026-11-11.md)
 - [November 13, 2026 - From Draft to Sprint: Planning Week in Review](./blog/2026-11-13.md)
 - [November 20, 2026 - Sprint Complete: Four Features and a Mystery](./blog/2026-11-20.md)
+- [November 25, 2026 - Help Is One Tap Away: The Crisis Screen and Meeting Favorites](./blog/2026-11-25.md)
 ---
 
 ## About the Project
